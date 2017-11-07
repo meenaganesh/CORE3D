@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Oct 30 09:29:45 2017
-
-@author: 212420318
-
 """
 
 import os
