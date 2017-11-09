@@ -5,7 +5,7 @@ Created on Thu Nov  9 14:17:42 2017
 @author: 200021424
 """
 
-import gdal
+
 from GISDataFunctions import helper_functions as hf
 from lxml import objectify
 from mpl_toolkits.basemap import Basemap
@@ -76,4 +76,4 @@ croppedData, x0, y0, x1, y1 = hf.getPatch(cornerPoints, data, rpcInformation)
 long, lat, plotPatch = hf.projectImage(croppedData, x0, y0, x1, y1, cornerPoints, rpcInformation)
 
 # plot the result:
-m.pcolormesh(lat,long,plotPatch[:,:,1],cmap='gray')
+m.pcolormesh(long,lat,plotPatch[:,:,1],cmap='gray')
