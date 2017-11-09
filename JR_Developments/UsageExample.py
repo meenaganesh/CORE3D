@@ -14,10 +14,7 @@ import numpy as np
 
 # Open NTF file for processing
 img = 'D:/Core3D/Data/jacksonville/satellite_imagery/WV2/MSI/05SEP16WV021200016SEP05162552-M1BS-500881026010_01_P006_________GA_E0AAAAAAIAAG0.NTF'
-ds = gdal.Open(img)
-
-# get raster data from first band:
-data = ds.GetRasterBand(1).ReadAsArray()
+data = hf.loadRasters(img)
 
 xmlFile = 'D:/Core3D/Data/jacksonville/satellite_imagery/WV2/MSI/16SEP05162552-M1BS-500881026010_01_P006.XML'
 # XML file associated with NTF:
@@ -61,16 +58,16 @@ for shape in m.corners:
 # Select corner points of interest:
 cornerPoints = np.zeros((4,2))
 deltaLong = abs(m.corners[0][0][0]-m.corners[0][2][0])/2.2
-deltaLat1= abs(m.corners[0][0][1]-m.corners[0][3][1])/2.2
-deltaLat2= abs(m.corners[0][1][1]-m.corners[0][2][1])/2.2
+deltaLat= abs(m.corners[0][0][1]-m.corners[0][3][1])/2.2
+
 cornerPoints[0, 0] = m.corners[0][0][0]+deltaLong
-cornerPoints[0, 1] = m.corners[0][0][1]-deltaLat1
+cornerPoints[0, 1] = m.corners[0][0][1]-deltaLat
 cornerPoints[1, 0] = m.corners[0][1][0]-deltaLong
-cornerPoints[1, 1] = m.corners[0][1][1]-deltaLat2
+cornerPoints[1, 1] = m.corners[0][1][1]-deltaLat
 cornerPoints[2, 0] = m.corners[0][2][0]-deltaLong
-cornerPoints[2, 1] = m.corners[0][2][1]+deltaLat2
+cornerPoints[2, 1] = m.corners[0][2][1]+deltaLat
 cornerPoints[3, 0] = m.corners[0][3][0]+deltaLong
-cornerPoints[3, 1] = m.corners[0][3][1]+deltaLat1
+cornerPoints[3, 1] = m.corners[0][3][1]+deltaLat
 
 # get the patch along with its upper left and lower right image coordinates:
 croppedData, x0, y0, x1, y1 = hf.getPatch(cornerPoints, data, rpcInformation)
@@ -79,4 +76,4 @@ croppedData, x0, y0, x1, y1 = hf.getPatch(cornerPoints, data, rpcInformation)
 long, lat, plotPatch = hf.projectImage(croppedData, x0, y0, x1, y1, cornerPoints, rpcInformation)
 
 # plot the result:
-m.pcolormesh(lat,long,plotPatch,cmap='gray')
+m.pcolormesh(lat,long,plotPatch[:,:,1],cmap='gray')

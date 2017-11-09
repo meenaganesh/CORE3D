@@ -32,7 +32,15 @@ def getPointcloudLatLong(inFile, refLat, refLon):
     longConv = longConv[longConv != 0]
     return latConv, longConv, elevation
 
-
+def loadRasters(filename):
+    ds = gdal.Open(filename)
+    xSize = ds.RasterXSize
+    ySize = ds.RasterYSize
+    rasterCount = ds.RasterCount
+    data = np.zeros((ySize, xSize, rasterCount))
+    for rasterCounter in range(1, rasterCount+1):
+        data[:,:,rasterCounter-1] = ds.GetRasterBand(rasterCounter).ReadAsArray()
+    return data
 # Get the RPC information needed to correct image
 def loadRPC(filename):
     xmlObject = objectify.parse(filename) 
@@ -99,8 +107,8 @@ def getPatch(cornerPoints,image, rpcInformation):
     y0 = np.max([0,y0])
     y1 = np.max([y1, y2])
     y1 = np.min([y1, image.shape[1]])
-    image = image[int(x0):int(x1),:]
-    returnImage = image[:,int(y0):int(y1)]
+    image = image[int(x0):int(x1),:,:]
+    returnImage = image[:,int(y0):int(y1),:]
     return returnImage, x0, y0, x1, y1
 
 
@@ -157,7 +165,7 @@ def projectImage(inputPatch, x0, y0, x1, y1, cornerPoints, rpcInformation):
     cornerPoints[2,:] = inverseLookup(cornerPoints[2,:],(x1,y1),rpcInformation)
     cornerPoints[3,:] = inverseLookup(cornerPoints[3,:],(x1,y0),rpcInformation)
     xySource = np.mgrid[y0:y1:1,x0:x1:1]
-    inputPatch = inputPatch.T
+    inputPatch = inputPatch.transpose(1,0,2)
     plotCoordinates = xySource[:,0:inputPatch.shape[0],0:inputPatch.shape[1]]
     pixelPoints = np.ones((4,2))
     pixelPoints[0,0] = y0
