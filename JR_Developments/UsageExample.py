@@ -15,31 +15,22 @@ import numpy as np
 # Open NTF file for processing
 img = 'D:/Core3D/Data/jacksonville/satellite_imagery/WV2/MSI/05SEP16WV021200016SEP05162552-M1BS-500881026010_01_P006_________GA_E0AAAAAAIAAG0.NTF'
 data = hf.loadRasters(img)
+rpcInformation = hf.loadRPC(img)
+bounds = hf.getTileBounds(img)
 
-xmlFile = 'D:/Core3D/Data/jacksonville/satellite_imagery/WV2/MSI/16SEP05162552-M1BS-500881026010_01_P006.XML'
-# XML file associated with NTF:
-rpcInformation = hf.loadRPC(xmlFile)
+# Getting point cloud information:
+pointCloudFile = 'D:/Core3D/Data/Vricon_Point_Cloud/data/0813636w_301725n_20170425T205946Z_ptcld.las'
+pointLat, pointLong, elevation, rgbColor, cornerPoints = hf.getPointcloudLatLong(pointCloudFile,bounds[0,0],bounds[0,1])
 
-# Setup plotting for sanity check. Assume the lat long points are provided:\
-# (here taken from the xml file)
-result = objectify.parse(xmlFile) 
-bounds = np.zeros((4,2))
-bounds[0,0] = result.find('TIL').find('TILE').find('ULLAT');
-bounds[0,1] = result.find('TIL').find('TILE').find('ULLON');
-bounds[1,0] = result.find('TIL').find('TILE').find('URLAT');
-bounds[1,1] = result.find('TIL').find('TILE').find('URLON');
-bounds[2,0] = result.find('TIL').find('TILE').find('LRLAT');
-bounds[2,1] = result.find('TIL').find('TILE').find('LRLON');
-bounds[3,0] = result.find('TIL').find('TILE').find('LLLAT');
-bounds[3,1] = result.find('TIL').find('TILE').find('LLLON');
 
+# Start plotting:
 fig = plt.figure()
 ax = fig.add_subplot(111);
 m = Basemap(projection='cyl',llcrnrlon=bounds[3,1]-.1,llcrnrlat=bounds[3,0]-.1,urcrnrlon=bounds[1,1]+.1,urcrnrlat=bounds[1,0]+.1, epsg=4326)
 
 # Plot a map for the specified view: xpixel for a higher resolution can be set
 # to 2000 instead of 200
-m.arcgisimage(service='ESRI_Imagery_World_2D', xpixels=200, verbose=True, zorder=1).get_array()
+#m.arcgisimage(service='ESRI_Imagery_World_2D', xpixels=200, verbose=True, zorder=1).get_array()
 
 # Draw roads from osm_roads:
 m.readshapefile('D:/Core3D/development/ex_FgMKU8FtfzgKJNgmUTE7T3Y5E1cgb_osm_roads', 'Streets',drawbounds = False)
@@ -55,19 +46,6 @@ for shape in m.corners:
     x, y, = zip(*shape)
     m.plot(x, y, linewidth = 2, color='white', alpha=.4) 
     
-# Select corner points of interest:
-cornerPoints = np.zeros((4,2))
-deltaLong = abs(m.corners[0][0][0]-m.corners[0][2][0])/2.2
-deltaLat= abs(m.corners[0][0][1]-m.corners[0][3][1])/2.2
-
-cornerPoints[0, 0] = m.corners[0][0][0]+deltaLong
-cornerPoints[0, 1] = m.corners[0][0][1]-deltaLat
-cornerPoints[1, 0] = m.corners[0][1][0]-deltaLong
-cornerPoints[1, 1] = m.corners[0][1][1]-deltaLat
-cornerPoints[2, 0] = m.corners[0][2][0]-deltaLong
-cornerPoints[2, 1] = m.corners[0][2][1]+deltaLat
-cornerPoints[3, 0] = m.corners[0][3][0]+deltaLong
-cornerPoints[3, 1] = m.corners[0][3][1]+deltaLat
 
 # get the patch along with its upper left and lower right image coordinates:
 croppedData, x0, y0, x1, y1 = hf.getPatch(cornerPoints, data, rpcInformation)
@@ -77,3 +55,9 @@ long, lat, plotPatch = hf.projectImage(croppedData, x0, y0, x1, y1, cornerPoints
 
 # plot the result:
 m.pcolormesh(long,lat,plotPatch[:,:,1],cmap='gray')
+
+
+
+#if(hf.boundingInImage(pointCloudFile, cornerPoints)):
+ax.scatter(pointLong, pointLat, c=rgbColor, marker="s")
+plt.show()

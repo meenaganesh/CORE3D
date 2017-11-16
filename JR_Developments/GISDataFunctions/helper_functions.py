@@ -9,28 +9,59 @@ Created on Tue Nov  7 11:07:27 2017
 import gdal
 import numpy as np
 from scipy.optimize import minimize
-import utm
-from lxml import objectify
+#import utm
+from pyproj import Proj, transform
+from scipy.spatial import ConvexHull
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from affine import Affine
+from laspy.file import File
 
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
 
 # Convert the UTM information in the .las files to lat/long
-def getPointcloudLatLong(inFile, refLat, refLon):
+def getPointcloudLatLong(filename, refLat, refLong):
+    inFile = File(filename, mode='r')
     latConv = np.zeros(len(inFile.x))
     longConv = np.zeros(len(inFile.x))
-    # getting utm codes:
-    tempLa, tempLo, regValue, regCode = utm.from_latlon(refLat, refLon)
-    for i in range(0,len(inFile.x),5000):
-        latConv[i], longConv[i] = utm.to_latlon(inFile.x[i], inFile.y[i],regValue,regCode)
+    EPSG=32700-np.max(np.round((45+refLat)/90)*100,0)+np.max(np.round((183+refLong)/6),0)
+    inProj = Proj(init='epsg:'+str(int(EPSG)))
+    outProj = Proj(init='epsg:4326')
+    longConv, latConv = transform(inProj, outProj, inFile.x, inFile.y)
+
     elevation = inFile.z;
-    elevation = elevation[latConv != 0]
-    latConv = latConv[latConv != 0]
-    longConv = longConv[longConv != 0]
-    return latConv, longConv, elevation
+    rgb = np.zeros((elevation.shape[0],4),dtype=np.float64)
+    rgb[:,0] = inFile.red/65536 # red
+    rgb[:,1] = inFile.green/65536 # green
+    rgb[:,2] = inFile.blue/65536 # blue
+    rgb[:,3] = 0.75
+
+    cornerPoints = np.array([longConv,latConv]).T
+    temp = ConvexHull(cornerPoints)
+    keepIndx = temp.neighbors[0:2,:].flatten()
+    return latConv, longConv, elevation, rgb, cornerPoints[temp.vertices][keepIndx,:]
+
+
+
+def boundingInImage(filename, imageBoundingBox):
+    inFile = File(filename, mode='r')
+    EPSG=32700-np.max(np.round((45+imageBoundingBox[0,1])/90)*100,0)+np.max(np.round((183+imageBoundingBox[0,0])/6),0)
+    inProj = Proj(init='epsg:'+str(int(EPSG)))
+    outProj = Proj(init='epsg:4326')
+    long0, lat0 = transform(inProj, outProj, inFile.header.min[0], inFile.header.min[1])
+    long1, lat1 = transform(inProj, outProj, inFile.header.max[0], inFile.header.max[1])
+    polygon = Polygon(imageBoundingBox) 
+    inBox = True
+    if(not polygon.contains(Point(long0, lat0))):
+        inBox = False
+    if(not polygon.contains(Point(long0, lat1))):
+        inBox = False
+    if(not polygon.contains(Point(long1, lat0))):
+        inBox = False
+    if(not polygon.contains(Point(long1, lat1))):
+        inBox = False
+    return inBox        
 
 def loadRasters(filename):
     ds = gdal.Open(filename)
@@ -41,30 +72,45 @@ def loadRasters(filename):
     for rasterCounter in range(1, rasterCount+1):
         data[:,:,rasterCounter-1] = ds.GetRasterBand(rasterCounter).ReadAsArray()
     return data
+
 # Get the RPC information needed to correct image
-def loadRPC(filename):
-    xmlObject = objectify.parse(filename) 
+def loadRPC(ntfFilename):
+    options = gdal.InfoOptions([], format='json')
+    jsonObject = gdal.Info(ntfFilename,options=options)
     rpcDict = {};
-    temp = xmlObject.find('RPB').find('IMAGE');
-    rpcDict['ERRBIAS'] = float(temp.find('ERRBIAS'))
-    rpcDict['ERRRAND'] = float(temp.find('ERRRAND'))
-    rpcDict['LINEOFFSET'] = int(temp.find('LINEOFFSET'))
-    rpcDict['SAMPOFFSET'] = int(temp.find('SAMPOFFSET'))
-    rpcDict['LATOFFSET'] = float(temp.find('LATOFFSET'))
-    rpcDict['LONGOFFSET'] = float(temp.find('LONGOFFSET'))
-    rpcDict['HEIGHTOFFSET'] = float(temp.find('HEIGHTOFFSET'))
-    rpcDict['LINESCALE'] = int(temp.find('LINESCALE'))
-    rpcDict['SAMPSCALE'] = int(temp.find('SAMPSCALE'))
-    rpcDict['LATSCALE'] = float(temp.find('LATSCALE'))
-    rpcDict['LONGSCALE'] = float(temp.find('LONGSCALE'))
-    rpcDict['HEIGHTSCALE'] = float(temp.find('HEIGHTSCALE'))
-    
-    rpcDict['LINENUMCOEF'] = [float(s) for s in temp.find('LINENUMCOEFList').find('LINENUMCOEF').text.split(' ')] #int(temp.find('LINENUMCOEFList').find('LINENUMCOEF').text)
-    rpcDict['LINEDENCOEF'] = [float(s) for s in temp.find('LINEDENCOEFList').find('LINEDENCOEF').text.split(' ')] 
-    rpcDict['SAMPNUMCOEF'] = [float(s) for s in temp.find('SAMPNUMCOEFList').find('SAMPNUMCOEF').text.split(' ')] 
-    rpcDict['SAMPDENCOEF'] = [float(s) for s in temp.find('SAMPDENCOEFList').find('SAMPDENCOEF').text.split(' ')] 
+    jsonObject.get('metadata')['RPC']
+    rpcDict['LINEOFFSET'] = int(jsonObject.get('metadata')['RPC']['LINE_OFF'])
+    rpcDict['SAMPOFFSET'] = int(jsonObject.get('metadata')['RPC']['SAMP_OFF'])
+    rpcDict['LATOFFSET'] = float(jsonObject.get('metadata')['RPC']['LAT_OFF'])
+    rpcDict['LONGOFFSET'] = float(jsonObject.get('metadata')['RPC']['LONG_OFF'])
+    rpcDict['HEIGHTOFFSET'] = float(jsonObject.get('metadata')['RPC']['HEIGHT_OFF'])
+    rpcDict['LINESCALE'] = int(jsonObject.get('metadata')['RPC']['LINE_SCALE'])
+    rpcDict['SAMPSCALE'] = int(jsonObject.get('metadata')['RPC']['SAMP_SCALE'])
+    rpcDict['LATSCALE'] = float(jsonObject.get('metadata')['RPC']['LAT_SCALE'])
+    rpcDict['LONGSCALE'] = float(jsonObject.get('metadata')['RPC']['LONG_SCALE'])
+    rpcDict['HEIGHTSCALE'] = float(jsonObject.get('metadata')['RPC']['HEIGHT_SCALE'])
+   
+    rpcDict['LINENUMCOEF'] =  [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['LINE_NUM_COEFF'].split(' ')))]#int(temp.find('LINENUMCOEFList').find('LINENUMCOEF').text)
+    rpcDict['LINEDENCOEF'] = [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['LINE_DEN_COEFF'].split(' ')))]#[float(s) for s in temp.find('LINEDENCOEFList').find('LINEDENCOEF').text.split(' ')] 
+    rpcDict['SAMPNUMCOEF'] = [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['SAMP_NUM_COEFF'].split(' ')))]#[float(s) for s in temp.find('SAMPNUMCOEFList').find('SAMPNUMCOEF').text.split(' ')] 
+    rpcDict['SAMPDENCOEF'] = [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['SAMP_DEN_COEFF'].split(' ')))]#[float(s) for s in temp.find('SAMPDENCOEFList').find('SAMPDENCOEF').text.split(' ')] 
     return rpcDict    
 
+# Get the tile bounds from the NTF file
+def getTileBounds(ntfFilename):
+    options = gdal.InfoOptions([], format='json')
+    jsonObject = gdal.Info(ntfFilename,options=options)
+    bounds = np.zeros((4,2))
+    bounds[0,0] = jsonObject.get('gcps')['gcpList'][0]['y']
+    bounds[0,1] = jsonObject.get('gcps')['gcpList'][0]['x']
+    bounds[1,0] = jsonObject.get('gcps')['gcpList'][1]['y']
+    bounds[1,1] = jsonObject.get('gcps')['gcpList'][1]['x']
+    bounds[2,0] = jsonObject.get('gcps')['gcpList'][2]['y']
+    bounds[2,1] = jsonObject.get('gcps')['gcpList'][2]['x']
+    bounds[3,0] = jsonObject.get('gcps')['gcpList'][3]['y']
+    bounds[3,1] = jsonObject.get('gcps')['gcpList'][3]['x']
+    return bounds
+    
 # Get image associated with a bounding box described by four corner points.
 def getPatch(cornerPoints,image, rpcInformation):
     normLat = (cornerPoints[0,1]-rpcInformation['LATOFFSET'])/rpcInformation['LATSCALE']
