@@ -20,8 +20,18 @@ from laspy.file import File
 # this allows GDAL to throw Python Exceptions
 gdal.UseExceptions()
 
-# Convert the UTM information in the .las files to lat/long
 def getPointcloudLatLong(filename, refLat, refLong):
+    # Convert the UTM information in the .las files to lat/long
+    # Input:
+    # filename: Complete path to .las file to be loaded
+    # refLat: Reference Latitude to get EPSG information
+    # refLong: Reference Longitude to get EPSG information
+    # Output:
+    # latConv: Resulting point latitudes
+    # longConv: Resulting point longitudes
+    # elevation: Resulting elevation
+    # rgb: RGB values for each point
+    # cornerPoints: Approximate bounding box cornerpoints
     inFile = File(filename, mode='r')
     latConv = np.zeros(len(inFile.x))
     longConv = np.zeros(len(inFile.x))
@@ -37,6 +47,9 @@ def getPointcloudLatLong(filename, refLat, refLong):
     rgb[:,2] = inFile.blue/65536 # blue
     rgb[:,3] = 0.75
 
+    # Determine approximate bounding box
+    # TODO: Calculate the actual bounding box and not just pull points from 
+    # the point cloud
     cornerPoints = np.array([longConv,latConv]).T
     temp = ConvexHull(cornerPoints)
     keepIndx = temp.neighbors[0:2,:].flatten()
