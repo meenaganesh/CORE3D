@@ -7,16 +7,17 @@ Created on Thu Nov  9 14:17:42 2017
 
 
 from GISDataFunctions import helper_functions as hf
-from lxml import objectify
+from GISDataFunctions import WVCalKernel as WVCK
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
-import numpy as np
+#import numpy as np
 
 # Open NTF file for processing
 img = 'D:/Core3D/Data/jacksonville/satellite_imagery/WV2/MSI/05SEP16WV021200016SEP05162552-M1BS-500881026010_01_P006_________GA_E0AAAAAAIAAG0.NTF'
 data = hf.loadRasters(img)
 rpcInformation = hf.loadRPC(img)
 bounds = hf.getTileBounds(img)
+
 
 # Getting point cloud information:
 pointCloudFile = 'D:/Core3D/Data/Vricon_Point_Cloud/data/0813636w_301725n_20170425T205946Z_ptcld.las'
@@ -48,7 +49,11 @@ for shape in m.corners:
     
 
 # get the patch along with its upper left and lower right image coordinates:
-croppedData, x0, y0, x1, y1 = hf.getPatch(cornerPoints, data, rpcInformation)
+croppedData, x0, y0, x1, y1 = hf.getPatch(cornerPoints, data, rpcInformation) 
+
+# Image Calibration:
+wv2 = WVCK.WV2params()
+test = WVCK.RadiometricCalibrator(img, wv2,sub_array = croppedData)
 
 # get the associated lat long information for every point in the image:
 long, lat, plotPatch = hf.projectImage(croppedData, x0, y0, x1, y1, cornerPoints, rpcInformation)

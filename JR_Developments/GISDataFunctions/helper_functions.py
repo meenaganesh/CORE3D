@@ -58,6 +58,12 @@ def getPointcloudLatLong(filename, refLat, refLong):
 
 
 def boundingInImage(filename, imageBoundingBox):
+    # Check if a point cloud is contained in an image bounding box
+    # Input:
+    # filename: Point cloud .las filename
+    # imageBoundingBox: Numpy array (4,2) giving the lat long of the four corners of the image
+    # Output:
+    # Boolean indicating if the point cloud is in the image
     inFile = File(filename, mode='r')
     EPSG=32700-np.max(np.round((45+imageBoundingBox[0,1])/90)*100,0)+np.max(np.round((183+imageBoundingBox[0,0])/6),0)
     inProj = Proj(init='epsg:'+str(int(EPSG)))
@@ -77,6 +83,11 @@ def boundingInImage(filename, imageBoundingBox):
     return inBox        
 
 def loadRasters(filename):
+    # Load the NTF raster file
+    # Input:
+    # filename: NTF filename
+    # Output:
+    # Numpy array size X x Y x #Bands 
     ds = gdal.Open(filename)
     xSize = ds.RasterXSize
     ySize = ds.RasterYSize
@@ -86,8 +97,12 @@ def loadRasters(filename):
         data[:,:,rasterCounter-1] = ds.GetRasterBand(rasterCounter).ReadAsArray()
     return data
 
-# Get the RPC information needed to correct image
 def loadRPC(ntfFilename):
+    # Get the RPC information needed to correct image
+    # Input:
+    # ntfFilename: Name of .NFT file to work with
+    # Output:
+    # Dictionary with the RPC information
     options = gdal.InfoOptions([], format='json')
     jsonObject = gdal.Info(ntfFilename,options=options)
     rpcDict = {};
@@ -103,14 +118,18 @@ def loadRPC(ntfFilename):
     rpcDict['LONGSCALE'] = float(jsonObject.get('metadata')['RPC']['LONG_SCALE'])
     rpcDict['HEIGHTSCALE'] = float(jsonObject.get('metadata')['RPC']['HEIGHT_SCALE'])
    
-    rpcDict['LINENUMCOEF'] =  [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['LINE_NUM_COEFF'].split(' ')))]#int(temp.find('LINENUMCOEFList').find('LINENUMCOEF').text)
-    rpcDict['LINEDENCOEF'] = [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['LINE_DEN_COEFF'].split(' ')))]#[float(s) for s in temp.find('LINEDENCOEFList').find('LINEDENCOEF').text.split(' ')] 
-    rpcDict['SAMPNUMCOEF'] = [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['SAMP_NUM_COEFF'].split(' ')))]#[float(s) for s in temp.find('SAMPNUMCOEFList').find('SAMPNUMCOEF').text.split(' ')] 
-    rpcDict['SAMPDENCOEF'] = [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['SAMP_DEN_COEFF'].split(' ')))]#[float(s) for s in temp.find('SAMPDENCOEFList').find('SAMPDENCOEF').text.split(' ')] 
+    rpcDict['LINENUMCOEF'] =  [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['LINE_NUM_COEFF'].split(' ')))]
+    rpcDict['LINEDENCOEF'] = [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['LINE_DEN_COEFF'].split(' ')))] 
+    rpcDict['SAMPNUMCOEF'] = [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['SAMP_NUM_COEFF'].split(' ')))] 
+    rpcDict['SAMPDENCOEF'] = [float(s) for s in list(filter(None, jsonObject.get('metadata')['RPC']['SAMP_DEN_COEFF'].split(' ')))] 
     return rpcDict    
 
-# Get the tile bounds from the NTF file
 def getTileBounds(ntfFilename):
+    # Get the tile bounds from the NTF file
+    # Input:
+    # ntfFilename: Name of .NFT file to work with
+    # Output:
+    # Numpy array of size (4,2) with longitude and latitude of the four corners of the image
     options = gdal.InfoOptions([], format='json')
     jsonObject = gdal.Info(ntfFilename,options=options)
     bounds = np.zeros((4,2))

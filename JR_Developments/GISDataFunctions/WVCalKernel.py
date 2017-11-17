@@ -19,9 +19,9 @@ def get_band_info(filename):
     imd_loc = [i for i, fname in enumerate(member_names) if '.IMD' in fname]
 
     # PYTHON VERSION 2.7
-    imd_data = [line.strip() for line in tar_data.extractfile(member_names[imd_loc[0]]).read().split('\n')]  # Takes first IMD file found for now. I do not know if there is ever more than one.
+    # imd_data = [line.strip() for line in tar_data.extractfile(member_names[imd_loc[0]]).read().split('\n')]  # Takes first IMD file found for now. I do not know if there is ever more than one.
     # PYTHON VERSION >= 3.3 comment out above line, uncomment below
-    # imd_data = [line.strip() for line in tar_data.extractfile(member_names[imd_loc[0]]).read().decode('utf-8').split('\n')]
+    imd_data = [line.strip() for line in tar_data.extractfile(member_names[imd_loc[0]]).read().decode('utf-8').split('\n')]
 
     band_labels = []
     abs_cal_factors = {}
