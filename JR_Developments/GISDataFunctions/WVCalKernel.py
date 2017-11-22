@@ -27,15 +27,16 @@ def get_band_info(filename):
     abs_cal_factors = {}
     effective_bandwidths = {}
     i = 0
+    match_number = re.compile('-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?')
     while i < len(imd_data):
         if 'BEGIN_GROUP' in imd_data[i] and 'BAND' in imd_data[i]:
             band_labels.append(imd_data[i].split('_')[-1])
             i += 1
             while 'END_GROUP' not in imd_data[i]:
                 if 'absCalFactor' in imd_data[i]:
-                    abs_cal_factors[band_labels[-1]] = float(re.findall('\d+\.\d+', imd_data[i])[0])
+                    abs_cal_factors[band_labels[-1]] = np.float64(re.findall(match_number, imd_data[i])[0])
                 if 'effectiveBandwidth' in imd_data[i]:
-                    effective_bandwidths[band_labels[-1]] = float(re.findall('\d+\.\d+', imd_data[i])[0])
+                    effective_bandwidths[band_labels[-1]] = np.float64(re.findall(match_number, imd_data[i])[0])
                 i += 1
         else:
             i += 1
@@ -60,41 +61,41 @@ class WV3params:
 
         self.band_lookup = ["P", "C", "B", "G", "Y", "R", "RE", "N", "N2", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"]
 
-        self.gain = {"P": 0.950,
-                     "C": 0.905,
-                     "B": 0.940,
-                     "G": 0.938,
-                     "Y": 0.962,
-                     "R": 0.964,
-                     "RE": 1.000,
-                     "N": 0.961,
-                     "N2": 0.978,
-                     "S1": 1.200,
-                     "S2": 1.227,
-                     "S3": 1.199,
-                     "S4": 1.196,
-                     "S5": 1.262,
-                     "S6": 1.314,
-                     "S7": 1.346,
-                     "S8": 1.376}
+        self.gain = {"P": np.float64(0.950),
+                     "C": np.float64(0.905),
+                     "B": np.float64(0.940),
+                     "G": np.float64(0.938),
+                     "Y": np.float64(0.962),
+                     "R": np.float64(0.964),
+                     "RE": np.float64(1.000),
+                     "N": np.float64(0.961),
+                     "N2": np.float64(0.978),
+                     "S1": np.float64(1.200),
+                     "S2": np.float64(1.227),
+                     "S3": np.float64(1.199),
+                     "S4": np.float64(1.196),
+                     "S5": np.float64(1.262),
+                     "S6": np.float64(1.314),
+                     "S7": np.float64(1.346),
+                     "S8": np.float64(1.376)}
 
-        self.offset = {"P": -3.629,
-                       "C": -8.604,
-                       "B": -5.809,
-                       "G": -4.996,
-                       "Y": -3.649,
-                       "R": -3.021,
-                       "RE": -4.521,
-                       "N": -5.522,
-                       "N2": -2.992,
-                       "S1": -5.546,
-                       "S2": -2.600,
-                       "S3": -2.309,
-                       "S4": -1.676,
-                       "S5": -0.705,
-                       "S6": -0.669,
-                       "S7": -0.512,
-                       "S8": -0.372}
+        self.offset = {"P": np.float64(-3.629),
+                       "C": np.float64(-8.604),
+                       "B": np.float64(-5.809),
+                       "G": np.float64(-4.996),
+                       "Y": np.float64(-3.649),
+                       "R": np.float64(-3.021),
+                       "RE": np.float64(-4.521),
+                       "N": np.float64(-5.522),
+                       "N2": np.float64(-2.992),
+                       "S1": np.float64(-5.546),
+                       "S2": np.float64(-2.600),
+                       "S3": np.float64(-2.309),
+                       "S4": np.float64(-1.676),
+                       "S5": np.float64(-0.705),
+                       "S6": np.float64(-0.669),
+                       "S7": np.float64(-0.512),
+                       "S8": np.float64(-0.372)}
 
 
 class WV2params:
@@ -103,25 +104,25 @@ class WV2params:
 
         self.band_idx = ["P", "C", "B", "G", "Y", "R", "RE", "N", "N2"]
 
-        self.gain = {"P": 0.942,
-                     "C": 1.151,
-                     "B": 0.988,
-                     "G": 0.936,
-                     "Y": 0.949,
-                     "R": 0.952,
-                     "RE": 0.974,
-                     "N": 0.961,
-                     "N2": 1.002}
+        self.gain = {"P": np.float64(0.942),
+                     "C": np.float64(1.151),
+                     "B": np.float64(0.988),
+                     "G": np.float64(0.936),
+                     "Y": np.float64(0.949),
+                     "R": np.float64(0.952),
+                     "RE": np.float64(0.974),
+                     "N": np.float64(0.961),
+                     "N2": np.float64(1.002)}
 
-        self.offset = {"P": -2.704,
-                       "C": -7.478,
-                       "B": -5.736,
-                       "G": -3.546,
-                       "Y": -3.564,
-                       "R": -2.512,
-                       "RE": -4.120,
-                       "N": -3.300,
-                       "N2": -2.891}
+        self.offset = {"P": np.float64(-2.704),
+                       "C": np.float64(-7.478),
+                       "B": np.float64(-5.736),
+                       "G": np.float64(-3.546),
+                       "Y": np.float64(-3.564),
+                       "R": np.float64(-2.512),
+                       "RE": np.float64(-4.120),
+                       "N": np.float64(-3.300),
+                       "N2": np.float64(-2.891)}
 
 
 class RadiometricCalibrator:
@@ -156,7 +157,8 @@ class RadiometricCalibrator:
     def calibrate(self):
         for i in range(self.raster_array.shape[2]):
             band_id = self.band_labels[i]
-            self.calibrated_array[:, :, i] = self.raster_array[:, :, i] * self.gains[band_id] * (self.abs_cal_factors[band_id] / self.effective_bandwidths[band_id]) + self.offset[band_id]
-
+            self.calibrated_array[:, :, i] = self.raster_array[:, :, i] * self.gains[band_id] *(self.abs_cal_factors[band_id] / self.effective_bandwidths[band_id]) + self.offset[band_id]
+        self.calibrated_array[self.calibrated_array<0] = 0
+        self.calibrated_array[self.calibrated_array>65535] = 65535
     def get_calibrated_data(self):
         return self.calibrated_array
