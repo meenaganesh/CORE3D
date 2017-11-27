@@ -52,7 +52,7 @@ def loadRasters(filename):
     data = np.zeros((ySize, xSize, rasterCount))
     for rasterCounter in range(1, rasterCount+1):
         data[:, :, rasterCounter-1] = ds.GetRasterBand(rasterCounter).ReadAsArray()
-    return data
+    return data,ds
 
 
 class WV3params:
@@ -142,7 +142,7 @@ class RadiometricCalibrator:
         except IOError:
             warnings.warn(".tar not found. band_labels, abs_cal_factors, and effective_bandwidths not set. Set tar file manually with set_tar() before calibrating.")
         if sub_array is None:
-            self.raster_array = loadRasters(raster_file)
+            self.raster_array,self.src_ds = loadRasters(raster_file)
         else:
             self.raster_array = sub_array
         self.calibrated_array = np.zeros(self.raster_array.shape)
@@ -161,4 +161,4 @@ class RadiometricCalibrator:
         self.calibrated_array[self.calibrated_array<0] = 0
         self.calibrated_array[self.calibrated_array>65535] = 65535
     def get_calibrated_data(self):
-        return self.calibrated_array
+        return self.calibrated_array,self.src_ds
