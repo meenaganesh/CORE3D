@@ -155,10 +155,12 @@ class RadiometricCalibrator:
             warnings.warn(".tar not found. band_labels, abs_cal_factors, and effective_bandwidths not set.")
 
     def calibrate(self):
+	scale_factor=1 #default
         for i in range(self.raster_array.shape[2]):
             band_id = self.band_labels[i]
-            self.calibrated_array[:, :, i] = self.raster_array[:, :, i] * self.gains[band_id] *(self.abs_cal_factors[band_id] / self.effective_bandwidths[band_id]) + self.offset[band_id]
-        self.calibrated_array[self.calibrated_array<0] = 0
-        self.calibrated_array[self.calibrated_array>65535] = 65535
+            self.calibrated_array[:, :, i] = self.raster_array[:, :, i] * self.gains[band_id] *(self.abs_cal_factors[band_id] / self.effective_bandwidths[band_id]) + self.offset[band_id]/10*scale_factor
+            #self.calibrated_array[self.calibrated_array<0] = 0
+            #print(np.amin(self.calibrated_array),np.amax(self.calibrated_array))
+            #self.calibrated_array[self.calibrated_array>65535] = 65535
     def get_calibrated_data(self):
         return self.calibrated_array,self.src_ds
