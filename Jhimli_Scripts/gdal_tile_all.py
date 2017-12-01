@@ -27,9 +27,9 @@ os.system('gdalbuildvrt'+' '+OutputFolder+'WV2MSI.vrt'+' '+'-te'+' '+str(ulx)+' 
 
 os.system('gdal_retile.py'+ ' -ps '+'4096'+' '+'4096'+' -co '+'"TILED=yes"'+' -co "INTERLEAVE=PIXEL" -targetDir'+' '+OutputFolder+' '+OutputFolder+'WV2MSI.vrt')
 
-os.system('gdal_rasterize -burn 255 -ot Byte -tr '+str(xres)+' '+str(yres)+' -co "COMPRESS=JPEG" '+SHPfolderPath+'*buildings.shp'+' '+OutputFolder+'buildings.tif')
+os.system('gdal_rasterize -at -a id -ot UInt32 -tr '+str(xres)+' '+str(yres)+' '+SHPfolderPath+'*buildings.shp'+' '+OutputFolder+'buildings.tif')
 
 os.system('gdalbuildvrt '+OutputFolder+'buildings.vrt'+' -te '+str(ulx)+' '+str(lry)+' '+str(lrx)+' '+str(uly)+' -tr '+str(xres)+' '+str(abs(yres))+' '+OutputFolder+'buildings.tif')
 
-os.system('gdal_retile.py'+' -ps '+'4096 4096 -co "TILED=yes" -co "COMPRESS=JPEG" -targetDir '+OutputFolder+' '+OutputFolder+'buildings.vrt')
+os.system('gdal_retile.py'+' -ps '+'4096 4096 -co "TILED=yes" -targetDir '+OutputFolder+' '+OutputFolder+'buildings.vrt')
 
