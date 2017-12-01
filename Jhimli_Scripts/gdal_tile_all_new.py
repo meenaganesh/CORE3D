@@ -85,9 +85,9 @@ for i in range(len(RasterList)):
 
 #os.system('gdal_retile.py'+ ' -ps '+'4096'+' '+'4096'+' -co '+'"TILED=yes"'+' -co "INTERLEAVE=PIXEL" -ot UInt16 -targetDir'+' '+OutputFolder+' '+OutputFolder+'WV2MSI.vrt')
 
-os.system('gdal_rasterize -burn 255 -ot Byte -tr '+str(xres)+' '+str(yres)+' -co "COMPRESS=JPEG" '+Raster_SHP_LAZ_FolderPath[5]+'*buildings.shp'+' '+OutputFolder+'Temp/'+'buildings.tif')
+os.system('gdal_rasterize -at -a id -ot UInt32 -tr '+str(xres)+' '+str(yres)+' '+Raster_SHP_LAZ_FolderPath[5]+'*buildings.shp'+' '+OutputFolder+'Temp/'+'buildings.tif')
 
 os.system('gdalbuildvrt '+OutputFolder+'Temp/'+'buildings.vrt'+' -te '+str(ulx)+' '+str(lry)+' '+str(lrx)+' '+str(uly)+' -tr '+str(xres)+' '+str(abs(yres))+' '+OutputFolder+'Temp/'+'buildings.tif')
 
-os.system('gdal_retile.py'+' -ps '+'4096 4096 -co "TILED=yes" -co "COMPRESS=JPEG" -targetDir '+OutputFolder+' '+OutputFolder+'Temp/'+'buildings.vrt')
+os.system('gdal_retile.py'+' -ps '+'4096 4096 -co "TILED=yes" -targetDir '+OutputFolder+' '+OutputFolder+'Temp/'+'buildings.vrt')
 
