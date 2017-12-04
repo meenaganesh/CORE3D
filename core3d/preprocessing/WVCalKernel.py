@@ -21,7 +21,8 @@ def get_band_info(filename):
     # PYTHON VERSION 2.7
     # imd_data = [line.strip() for line in tar_data.extractfile(member_names[imd_loc[0]]).read().split('\n')]  # Takes first IMD file found for now. I do not know if there is ever more than one.
     # PYTHON VERSION >= 3.3 comment out above line, uncomment below
-    imd_data = [line.strip() for line in tar_data.extractfile(member_names[imd_loc[0]]).read().decode('utf-8').split('\n')]
+    imd_data = [line.strip() for line in
+                tar_data.extractfile(member_names[imd_loc[0]]).read().decode('utf-8').split('\n')]
 
     band_labels = []
     abs_cal_factors = {}
@@ -49,17 +50,21 @@ def loadRasters(filename):
     xSize = ds.RasterXSize
     ySize = ds.RasterYSize
     rasterCount = ds.RasterCount
+    print(ds)
+    md = ds.GetMetadata()
+    sensor = md['NITF_PIAIMC_SENSNAME']
+
+
     data = np.zeros((ySize, xSize, rasterCount))
-    for rasterCounter in range(1, rasterCount+1):
-        data[:, :, rasterCounter-1] = ds.GetRasterBand(rasterCounter).ReadAsArray()
-    return data,ds
+    for rasterCounter in range(1, rasterCount + 1):
+        data[:, :, rasterCounter - 1] = ds.GetRasterBand(rasterCounter).ReadAsArray()
+    return data, ds
 
 
 class WV3params:
-
     def __init__(self):
-
-        self.band_lookup = ["P", "C", "B", "G", "Y", "R", "RE", "N", "N2", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"]
+        self.band_lookup = ["P", "C", "B", "G", "Y", "R", "RE", "N", "N2", "S1", "S2", "S3", "S4", "S5", "S6", "S7",
+                            "S8"]
 
         self.gain = {"P": np.float64(0.950),
                      "C": np.float64(0.905),
@@ -99,9 +104,7 @@ class WV3params:
 
 
 class WV2params:
-
     def __init__(self):
-
         self.band_idx = ["P", "C", "B", "G", "Y", "R", "RE", "N", "N2"]
 
         self.gain = {"P": np.float64(0.942),
@@ -126,13 +129,15 @@ class WV2params:
 
 
 class RadiometricCalibrator:
-
-    def __init__(self, raster_file, satellite_params, sub_array=None):
+    def __init__(self, raster_file, satellite_params=None, sub_array=None):
         """
         :param raster_file: file name with full path to .NTF file to calibrate
         :param satellite_params: one of the above WV satellite objects corresponding to satellite of the .NTF
         :param sub_array: optional. numpy ndarray respresentation of a raster
         """
+        if(satellite_params is None):
+            satellite_params = self.get_cal_params(raster_file)
+
         self.raster_file = raster_file
         self.tar_file = raster_file[:-4] + '.tar'
         self.gains = satellite_params.gain
@@ -140,12 +145,23 @@ class RadiometricCalibrator:
         try:
             self.band_labels, self.abs_cal_factors, self.effective_bandwidths = get_band_info(self.tar_file)
         except IOError:
-            warnings.warn(".tar not found. band_labels, abs_cal_factors, and effective_bandwidths not set. Set tar file manually with set_tar() before calibrating.")
+            warnings.warn(
+                ".tar not found. band_labels, abs_cal_factors, and effective_bandwidths not set. Set tar file manually with set_tar() before calibrating.")
         if sub_array is None:
-            self.raster_array,self.src_ds = loadRasters(raster_file)
+            self.raster_array, self.src_ds = loadRasters(raster_file)
         else:
             self.raster_array = sub_array
         self.calibrated_array = np.zeros(self.raster_array.shape)
+
+    def get_cal_params(self, filename):
+        ds = gdal.Open(filename)
+        md = ds.GetMetadata()
+        sensor = md['NITF_PIAIMC_SENSNAME']
+        if(sensor == 'WV03'):
+            return WV3params()
+        elif(sensor == 'WV02'):
+            return WV2params()
+        return None
 
     def set_tar(self, tar_file):
         self.tar_file = tar_file
@@ -155,12 +171,15 @@ class RadiometricCalibrator:
             warnings.warn(".tar not found. band_labels, abs_cal_factors, and effective_bandwidths not set.")
 
     def calibrate(self):
-	scale_factor=1 #default
+        scale_factor = 1  # default
         for i in range(self.raster_array.shape[2]):
             band_id = self.band_labels[i]
-            self.calibrated_array[:, :, i] = self.raster_array[:, :, i] * self.gains[band_id] *(self.abs_cal_factors[band_id] / self.effective_bandwidths[band_id]) + self.offset[band_id]/10*scale_factor
-            #self.calibrated_array[self.calibrated_array<0] = 0
-            #print(np.amin(self.calibrated_array),np.amax(self.calibrated_array))
-            #self.calibrated_array[self.calibrated_array>65535] = 65535
+            self.calibrated_array[:, :, i] = self.raster_array[:, :, i] * self.gains[band_id] * (
+            self.abs_cal_factors[band_id] / self.effective_bandwidths[band_id]) + self.offset[
+                                                                                      band_id] / 10 * scale_factor
+            # self.calibrated_array[self.calibrated_array<0] = 0
+            # print(np.amin(self.calibrated_array),np.amax(self.calibrated_array))
+            # self.calibrated_array[self.calibrated_array>65535] = 65535
+
     def get_calibrated_data(self):
-        return self.calibrated_array,self.src_ds
+        return self.calibrated_array, self.src_ds

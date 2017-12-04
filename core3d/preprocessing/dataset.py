@@ -1,9 +1,13 @@
-import os,sys
-
+import glob
+import logging
+import os
 import shutil
-from osgeo import gdal,ogr
+from osgeo import gdal
 import tempfile
+from core3d.preprocessing.WVCalKernel import RadiometricCalibrator
 
+
+logger = logging.getLogger(__name__)
 
 class RasterSet:
     def __init__(self, name, folder, pattern, geo):
@@ -12,13 +16,16 @@ class RasterSet:
         self.pattern = pattern
         self.geo = geo
 
+
 class VectorSet:
     def __init__(self, name, file, value):
         self.name = name
         self.file = file
         self.value = value
 
+
 class DataSet:
+
     def __init__(self):
         self.rasters = []
         self.vectors = []
@@ -65,6 +72,24 @@ class DataSet:
                 self.tile_x, self.tile_y, target_folder, vrt))
             shutil.rmtree(v_dir)
 
+    def calibrate_raster_set(self, folder, sub_folder, pattern, out_dir, ext):
+        src_folder = os.path.join(folder, sub_folder)
+        out_folder = os.path.join(out_dir, sub_folder)
+        os.makedirs(out_folder, exist_ok=True)
+
+        files = sorted(glob.glob(os.path.join(src_folder, pattern)))
+        for file in files:
+            out_path = os.path.join(out_folder, os.path.basename(file) + ext)
+            if os.path.exists(out_path):
+                logger.info('Skipping calibration for {}, file exists.'.format(out_path))
+            else:
+                raster = RadiometricCalibrator(file)
+                raster.calibrate()
+                raster_array, src_ds = raster.get_calibrated_data()
+                gdal.Warp(out_path, src_ds, format='GTiff', rpc=True, multithread=True, resampleAlg='cubic',
+                          outputType=gdal.GDT_UInt16)
+                logger.info('Calibrated {}.'.format(out_path))
+
     def add_raster_set(self, name, folder, pattern):
         tdir = tempfile.mkdtemp()
         vrt = os.path.join(tdir,name+'.vrt')
@@ -97,17 +122,25 @@ class DataSet:
         self.vectors.append(VectorSet(name, file, value))
 
 
+if __name__ == "__main__":
+    ds = DataSet()
 
-ds = DataSet()
-dir = '/raid/data/wdixon/jacksonville/satellite_imagery/'
-shape_file = '/raid/data/wdixon/jacksonville/open_street_map/SHP/ex_FgMKU8FtfzgKJNgmUTE7T3Y5E1cgb_osm_buildings.shp'
+    out_dir = '/raid/data/wdixon/output/jacksonville'
+    dir = '/raid/data/wdixon/jacksonville/satellite_imagery/'
+    shape_file = '/raid/data/wdixon/jacksonville/open_street_map/SHP/ex_FgMKU8FtfzgKJNgmUTE7T3Y5E1cgb_osm_buildings.shp'
 
-ds.add_raster_set('wv2_msi',os.path.join(dir,'WV2/MSI'), "*.tif")
-ds.add_raster_set('wv2_pan',os.path.join(dir,'WV2/PAN'), "*.tif")
-ds.add_raster_set('wv3_swir',os.path.join(dir,'WV3/SWIR'),"*.tif")
-ds.add_raster_set('wv3_pan',os.path.join(dir,'WV3/PAN'), "*.tif")
-ds.add_raster_set('wv3_msi',os.path.join(dir,'WV3/MSI'), "*.tif")
-ds.add_shape_set('buildings', shape_file, 255)
+    ds.calibrate_raster_set(dir,'WV2/MSI', "*.NTF", out_dir, '_cal.tif')
+    ds.calibrate_raster_set(dir,'WV2/PAN', "*.NTF", out_dir, '_cal.tif')
+    ds.calibrate_raster_set(dir,'WV3/SWIR', "*.NTF", out_dir, '_cal.tif')
+    ds.calibrate_raster_set(dir,'WV3/PAN', "*.NTF", out_dir, '_cal.tif')
+    ds.calibrate_raster_set(dir,'WV3/MSI', "*.NTF", out_dir, '_cal.tif')
 
-ds.create_tiles('/raid/data/wdixon/output')
+    ds.add_raster_set('wv2_msi',os.path.join(out_dir,'WV2/MSI'), "*.tif")
+    ds.add_raster_set('wv2_pan',os.path.join(out_dir,'WV2/PAN'), "*.tif")
+    ds.add_raster_set('wv3_swir',os.path.join(out_dir,'WV3/SWIR'),"*.tif")
+    ds.add_raster_set('wv3_pan',os.path.join(out_dir,'WV3/PAN'), "*.tif")
+    ds.add_raster_set('wv3_msi',os.path.join(out_dir,'WV3/MSI'), "*.tif")
+    ds.add_shape_set('buildings', shape_file, 255)
+
+    ds.create_tiles('/raid/data/wdixon/output')
 
