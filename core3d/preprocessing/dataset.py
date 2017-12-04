@@ -2,7 +2,7 @@ import glob
 import logging
 import os
 import shutil
-from osgeo import gdal
+from osgeo import gdal,osr
 import tempfile
 from core3d.preprocessing.WVCalKernel import RadiometricCalibrator
 
@@ -25,7 +25,6 @@ class VectorSet:
 
 
 class DataSet:
-
     def __init__(self):
         self.rasters = []
         self.vectors = []
@@ -35,13 +34,32 @@ class DataSet:
         self.res_x = self.res_y = float('inf')
         self.tile_x = 4096
         self.tile_y = 4096
+        self.out_ext = None
+
+    def set_output_extents(self, filename):
+        self.out_ext = filename
+
+    def output_extents(self, file):
+        if self.out_ext:
+            ds = gdal.Open(file)
+            with open(self.out_ext, 'a+') as f:
+                geo = ds.GetGeoTransform()
+                f.write(file)
+                f.write(str(ds.RasterXSize))
+                f.write(' ')
+                f.write(str(ds.RasterYSize))
+                f.write(' ')
+                f.write(str(ds.RasterCount))
+                f.write(' ')
+                f.write(str(geo))
+                f.write('\n')
 
     def get_te(self):
         # TODO - for different hemispheres we need to reorder this as
         return str(self.ul_x) + ' ' + str(self.lr_y) + ' ' + str(self.lr_x) + ' ' + str(self.ul_y)
 
     def create_tiles(self, target_folder):
-        os.makedirs(target_folder)
+        os.makedirs(target_folder, exist_ok=True)
         self.create_vector_tiles(target_folder)
         self.create_raster_tiles(target_folder)
 
@@ -86,11 +104,53 @@ class DataSet:
                 raster = RadiometricCalibrator(file)
                 raster.calibrate()
                 raster_array, src_ds = raster.get_calibrated_data()
+
                 gdal.Warp(out_path, src_ds, format='GTiff', rpc=True, multithread=True, resampleAlg='cubic',
                           outputType=gdal.GDT_UInt16)
                 logger.info('Calibrated {}.'.format(out_path))
 
+    def add_las_set(self, name, folder, pattern):
+        tdir = tempfile.mkdtemp()
+        jfile = os.path.join(tdir,'laz.json')
+
+        json = '{"pipeline": [ {"type": "readers.las", "filename": "dummy_in" },' + \
+               '{"type": "writers.gdal", "data_type": "float", "nodata": 0, ' +\
+               '"resolution": 1, "filename": "dummy_out" }]}'
+
+        with open(jfile, 'w') as f:
+            f.write(json)
+
+        files = sorted(glob.glob(os.path.join(folder, pattern)))
+        for file in files:
+
+            tif_file = file + '.tif'
+            tif_proj_file = file + '_4326.tif'
+
+            if os.path.exists(tif_proj_file):
+                logger.info('Skipping raster projection {}, file exists.'.format(tif_proj_file))
+            else:
+                if os.path.exists(tif_file):
+                    logger.info('Skipping raster {}, file exists.'.format(tif_file))
+                else:
+                    exe = 'pdal pipeline -i {} --readers.las.filename={} --writers.gdal.filename={}'\
+                        .format(jfile, file, tif_file)
+                    os.system(exe)
+
+                exe = 'gdalwarp -t_srs EPSG:4326 {} {}'.format(tif_file, tif_proj_file)
+                os.system(exe)
+                os.unlink(tif_file)
+
+        self.add_raster_set(name, folder, '*4326.tif')
+        shutil.rmtree(tdir)
+
+
+
     def add_raster_set(self, name, folder, pattern):
+
+        files = sorted(glob.glob(os.path.join(folder, pattern)))
+        for file in files:
+            self.output_extents(file)
+
         tdir = tempfile.mkdtemp()
         vrt = os.path.join(tdir,name+'.vrt')
         exe = 'gdalbuildvrt {} {}'.format(vrt, os.path.join(folder,pattern))
@@ -128,18 +188,21 @@ if __name__ == "__main__":
     out_dir = '/raid/data/wdixon/output/jacksonville'
     dir = '/raid/data/wdixon/jacksonville/satellite_imagery/'
     shape_file = '/raid/data/wdixon/jacksonville/open_street_map/SHP/ex_FgMKU8FtfzgKJNgmUTE7T3Y5E1cgb_osm_buildings.shp'
+    ds.set_output_extents(os.path.join(out_dir,'ext.txt'))
 
-    ds.calibrate_raster_set(dir,'WV2/MSI', "*.NTF", out_dir, '_cal.tif')
-    ds.calibrate_raster_set(dir,'WV2/PAN', "*.NTF", out_dir, '_cal.tif')
-    ds.calibrate_raster_set(dir,'WV3/SWIR', "*.NTF", out_dir, '_cal.tif')
-    ds.calibrate_raster_set(dir,'WV3/PAN', "*.NTF", out_dir, '_cal.tif')
-    ds.calibrate_raster_set(dir,'WV3/MSI', "*.NTF", out_dir, '_cal.tif')
+    ds.add_las_set('laz', '/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data','*.laz')
 
-    ds.add_raster_set('wv2_msi',os.path.join(out_dir,'WV2/MSI'), "*.tif")
-    ds.add_raster_set('wv2_pan',os.path.join(out_dir,'WV2/PAN'), "*.tif")
-    ds.add_raster_set('wv3_swir',os.path.join(out_dir,'WV3/SWIR'),"*.tif")
-    ds.add_raster_set('wv3_pan',os.path.join(out_dir,'WV3/PAN'), "*.tif")
-    ds.add_raster_set('wv3_msi',os.path.join(out_dir,'WV3/MSI'), "*.tif")
+    # ds.calibrate_raster_set(dir,'WV2/MSI', "*.NTF", out_dir, '_cal.tif')
+    # ds.calibrate_raster_set(dir,'WV2/PAN', "*.NTF", out_dir, '_cal.tif')
+    # ds.calibrate_raster_set(dir,'WV3/SWIR', "*.NTF", out_dir, '_cal.tif')
+    # ds.calibrate_raster_set(dir,'WV3/PAN', "*.NTF", out_dir, '_cal.tif')
+    # ds.calibrate_raster_set(dir,'WV3/MSI', "*.NTF", out_dir, '_cal.tif')
+    #
+    # ds.add_raster_set('wv2_msi',os.path.join(out_dir,'WV2/MSI'), "*.tif")
+    # ds.add_raster_set('wv2_pan',os.path.join(out_dir,'WV2/PAN'), "*.tif")
+    # ds.add_raster_set('wv3_swir',os.path.join(out_dir,'WV3/SWIR'),"*.tif")
+    # ds.add_raster_set('wv3_pan',os.path.join(out_dir,'WV3/PAN'), "*.tif")
+    # ds.add_raster_set('wv3_msi',os.path.join(out_dir,'WV3/MSI'), "*.tif")
     ds.add_shape_set('buildings', shape_file, 255)
 
     ds.create_tiles('/raid/data/wdixon/output')
