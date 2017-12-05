@@ -9,12 +9,14 @@ from core3d.preprocessing.WVCalKernel import RadiometricCalibrator
 
 logger = logging.getLogger(__name__)
 
+
 class RasterSet:
-    def __init__(self, name, folder, pattern, geo):
+    def __init__(self, name, folder, pattern, geo, nodata=0):
         self.name = name
         self.folder = folder
         self.pattern = pattern
         self.geo = geo
+        self.nodata = nodata
 
 
 class VectorSet:
@@ -34,6 +36,7 @@ class DataSet:
         self.res_x = self.res_y = float('inf')
         self.tile_x = 4096
         self.tile_y = 4096
+        self.f_nodata = 9999
         self.out_ext = None
 
     def set_output_extents(self, filename):
@@ -70,8 +73,8 @@ class DataSet:
             v_dir = tempfile.mkdtemp()
             vrt = os.path.join(v_dir, r.name + '.vrt')
             x = self.get_te()
-            os.system('gdalbuildvrt {} -tr {} {} -te {} -srcnodata 0 -vrtnodata 0 {}'.format(
-                vrt, self.res_x, self.res_y, self.get_te(), os.path.join(r.folder, r.pattern)))
+            os.system('gdalbuildvrt {} -tr {} {} -te {} -srcnodata {} -vrtnodata {} {}'.format(
+                vrt, self.res_x, self.res_y, self.get_te(), r.nodata, r.nodata, os.path.join(r.folder, r.pattern)))
             os.system('gdal_retile.py -ps {} {} -co "TILED=yes" -co "INTERLEAVE=PIXEL" -targetDir {} {}'.format(
                 self.tile_x, self.tile_y, target_folder, vrt))
             shutil.rmtree(v_dir)
@@ -114,8 +117,8 @@ class DataSet:
         jfile = os.path.join(tdir,'laz.json')
 
         json = '{"pipeline": [ {"type": "readers.las", "filename": "dummy_in" },' + \
-               '{"type": "writers.gdal", "data_type": "float", "nodata": 0, ' +\
-               '"resolution": 1, "filename": "dummy_out" }]}'
+               '{"type": "writers.gdal", "data_type": "float", "nodata": '+str(self.f_nodata)+', ' +\
+               '"resolution": 0.5, "radius": 1, "filename": "dummy_out" }]}'
 
         with open(jfile, 'w') as f:
             f.write(json)
@@ -140,13 +143,10 @@ class DataSet:
                 os.system(exe)
                 os.unlink(tif_file)
 
-        self.add_raster_set(name, folder, '*4326.tif')
+        self.add_raster_set(name, folder, '*4326.tif', self.f_nodata)
         shutil.rmtree(tdir)
 
-
-
-    def add_raster_set(self, name, folder, pattern):
-
+    def add_raster_set(self, name, folder, pattern, nodata=0):
         files = sorted(glob.glob(os.path.join(folder, pattern)))
         for file in files:
             self.output_extents(file)
@@ -160,7 +160,7 @@ class DataSet:
         self.size_y = ds.RasterYSize
         geo = ds.GetGeoTransform()
         shutil.rmtree(tdir)
-        self.rasters.append(RasterSet(name, folder, pattern, geo))
+        self.rasters.append(RasterSet(name, folder, pattern, geo, nodata))
 
         # calculate local extents
         ulx = geo[0]
@@ -192,17 +192,17 @@ if __name__ == "__main__":
 
     ds.add_las_set('laz', '/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data','*.laz')
 
-    # ds.calibrate_raster_set(dir,'WV2/MSI', "*.NTF", out_dir, '_cal.tif')
-    # ds.calibrate_raster_set(dir,'WV2/PAN', "*.NTF", out_dir, '_cal.tif')
-    # ds.calibrate_raster_set(dir,'WV3/SWIR', "*.NTF", out_dir, '_cal.tif')
-    # ds.calibrate_raster_set(dir,'WV3/PAN', "*.NTF", out_dir, '_cal.tif')
-    # ds.calibrate_raster_set(dir,'WV3/MSI', "*.NTF", out_dir, '_cal.tif')
+    ds.calibrate_raster_set(dir,'WV2/MSI', "*.NTF", out_dir, '_cal.tif')
+    ds.calibrate_raster_set(dir,'WV2/PAN', "*.NTF", out_dir, '_cal.tif')
+    ds.calibrate_raster_set(dir,'WV3/SWIR', "*.NTF", out_dir, '_cal.tif')
+    ds.calibrate_raster_set(dir,'WV3/PAN', "*.NTF", out_dir, '_cal.tif')
+    ds.calibrate_raster_set(dir,'WV3/MSI', "*.NTF", out_dir, '_cal.tif')
     #
-    # ds.add_raster_set('wv2_msi',os.path.join(out_dir,'WV2/MSI'), "*.tif")
-    # ds.add_raster_set('wv2_pan',os.path.join(out_dir,'WV2/PAN'), "*.tif")
-    # ds.add_raster_set('wv3_swir',os.path.join(out_dir,'WV3/SWIR'),"*.tif")
-    # ds.add_raster_set('wv3_pan',os.path.join(out_dir,'WV3/PAN'), "*.tif")
-    # ds.add_raster_set('wv3_msi',os.path.join(out_dir,'WV3/MSI'), "*.tif")
+    ds.add_raster_set('wv2_msi',os.path.join(out_dir,'WV2/MSI'), "*.tif")
+    ds.add_raster_set('wv2_pan',os.path.join(out_dir,'WV2/PAN'), "*.tif")
+    ds.add_raster_set('wv3_swir',os.path.join(out_dir,'WV3/SWIR'),"*.tif")
+    ds.add_raster_set('wv3_pan',os.path.join(out_dir,'WV3/PAN'), "*.tif")
+    ds.add_raster_set('wv3_msi',os.path.join(out_dir,'WV3/MSI'), "*.tif")
     ds.add_shape_set('buildings', shape_file, 255)
 
     ds.create_tiles('/raid/data/wdixon/output')
