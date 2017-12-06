@@ -42,20 +42,29 @@ class DataSet:
     def set_output_extents(self, filename):
         self.out_ext = filename
 
-    def output_extents(self, file):
+    def output_extents(self, name, file):
         if self.out_ext:
             ds = gdal.Open(file)
             with open(self.out_ext, 'a+') as f:
                 geo = ds.GetGeoTransform()
-                f.write(file)
-                f.write(str(ds.RasterXSize))
-                f.write(' ')
-                f.write(str(ds.RasterYSize))
-                f.write(' ')
-                f.write(str(ds.RasterCount))
-                f.write(' ')
-                f.write(str(geo))
-                f.write('\n')
+                ulx = geo[0]
+                uly = geo[3]
+                lrx = ulx + ds.RasterXSize * geo[1]
+                lry = uly + ds.RasterYSize * geo[5]
+                min_x = min(ulx, lrx)
+                max_x = max(ulx, lrx)
+                min_y = min(uly, lry)
+                max_y = max(uly, lry)
+                # (minx, miny, maxx, maxy)
+                line = '{} {} {} {} {} {} {} {} {} {}\n'.format(name, file, ds.RasterXSize, ds.RasterYSize, ds.RasterCount,
+                                                           min_x, min_y, max_x, max_y, str(geo))
+                f.write(line)
+
+    def output_tile_extents(self, folder, pattern):
+        if self.out_ext:
+            files = sorted(glob.glob(os.path.join(folder, pattern)))
+            for file in files:
+                self.output_extents('tile',file)
 
     def get_te(self):
         # TODO - for different hemispheres we need to reorder this as
@@ -78,6 +87,7 @@ class DataSet:
             os.system('gdal_retile.py -ps {} {} -co "TILED=yes" -co "INTERLEAVE=PIXEL" -targetDir {} {}'.format(
                 self.tile_x, self.tile_y, target_folder, vrt))
             shutil.rmtree(v_dir)
+        self.output_tile_extents(target_folder, "*.tif")
 
     def create_vector_tiles(self, target_folder):
         for r in self.vectors:
@@ -92,6 +102,7 @@ class DataSet:
             os.system('gdal_retile.py -ps {} {} -co "TILED=yes" -co "COMPRESS=JPEG" -targetDir {} {}'.format(
                 self.tile_x, self.tile_y, target_folder, vrt))
             shutil.rmtree(v_dir)
+        self.output_tile_extents(target_folder, "*.tif")
 
     def calibrate_raster_set(self, folder, sub_folder, pattern, out_dir, ext):
         src_folder = os.path.join(folder, sub_folder)
@@ -149,7 +160,7 @@ class DataSet:
     def add_raster_set(self, name, folder, pattern, nodata=0):
         files = sorted(glob.glob(os.path.join(folder, pattern)))
         for file in files:
-            self.output_extents(file)
+            self.output_extents(name, file)
 
         tdir = tempfile.mkdtemp()
         vrt = os.path.join(tdir,name+'.vrt')
