@@ -4,7 +4,7 @@ import os
 import shutil
 from osgeo import gdal,osr
 import tempfile
-from core3d.preprocessing.WVCalKernel import RadiometricCalibrator
+from preprocessing.align_stitch.WVCalKernel import RadiometricCalibrator
 
 
 logger = logging.getLogger(__name__)
