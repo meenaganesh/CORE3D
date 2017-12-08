@@ -70,5 +70,5 @@ class RasterModalityFilter:
 
 if __name__ == '__main__':
     ii = RasterModalityFilter()
-    ii.load_extents('/raid/data/wdixon/output/jacksonville/ext.txt')
+    ii.load_extents('/home/sernamlim/data/CORE3D/jacksonville/output/ext.txt')
     ii.generate_raster_cuts('mycut', ['wv3_msi', 'laz'])
