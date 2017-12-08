@@ -78,9 +78,9 @@ def translate_geotiff_tile(in_path,out_path,tile,trans):
     return()
 
 # Paths to tiles and pngs
-input_tiles_folder='C:/PROJECTS/CORE3D/05_python_dev/input_tif/'
-output_tiles_folder='C:/PROJECTS/CORE3D/05_python_dev/output_tif/'
-tiles_png_folder='C:/PROJECTS/CORE3D/05_python_dev/png_tiles/'
+input_tiles_folder='/home/sernamlim/data/CORE3D/jacksonville/output/'
+output_tiles_folder='/home/sernamlim/data/CORE3D/jacksonville/output/aligned/'
+tiles_png_folder='/home/sernamlim/data/CORE3D/jacksonville/output/aligned/'
 
 # Source and target of translation
 pan_filename='wv2_pan_03_14.tif'
