@@ -1,6 +1,34 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Oct 30 09:29:45 2017
+Updated on 9 Dec 2017 09:44:00 2017
+
+Translates geotiff tiles based on algorithm in Reddy & Chatterji and python implementation of Gohlk, et. al.:
+
+###########
+#  Refs   #
+###########
+
+Gohlke, C., Týč, M., & Seljebu, A. (2017, November 6). imreg_dft.
+	Retrieved from github: https://github.com/matejak/imreg_dft
+Reddy, B., & Chatterji, B. (1996). 
+	An FFT-based technique for translation, rotation and scale-invariant image registration.
+	IEEE Transactions on Image Processing, 5, 1266-1271.
+
+###########
+# Summary #
+###########
+
+Derives wv2/3_pan_row_col.tif to buildings_row_col.tif translation using imreg_dft, and applies to respective wv2/3 msi and pan images. 
+	- Translation vectors summarized by modality, and row and col information in the file '/out_folder/trans_summary.csv'.
+
+##############
+# Next steps #
+##############
+
+To do (as of 9 Dec 2017):
+	-derive translation vectors using pan and all 8 msi raster bands, then fuse to find optimal translation.
+	-expand to rotations and scaling including data fusion across all raster bands
 
 @author: Peter
 
