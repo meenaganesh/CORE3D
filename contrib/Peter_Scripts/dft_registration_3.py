@@ -29,7 +29,12 @@ def read_building_tif_into_array(bldg):
     '''
     Reads building tif into numpy array
     '''
-    arr = sp.misc.imread(bldg, True)# .astype(np.uint16)
+
+    arr = np.zeros([4096, 4096], dtype=np.uint16)
+    try:
+        arr = sp.misc.imread(bldg, True)# .astype(np.uint16)
+    except ValueError:
+        print('Building file not loaded properly.')
     return arr
 
 
@@ -43,10 +48,16 @@ def comp_trans(src,target):
     Outputs:
         tvec: translation vector measured in pixels
     '''
+    tvec = [0,0]
     
-    result = ird.translation(src,target)
-    tvec = result['tvec']
-    
+    range_target = target.max() - target.min()
+    if range_target > 0:
+        try:
+            result = ird.translation(src,target)
+            tvec = result['tvec']
+        except OverflowError:
+            tvec = float('nan')
+            
     return tvec
 
 def trans_geotiff_tile(in_path,out_path,tile,trans):
@@ -103,6 +114,7 @@ def align_row_col_tiles(in_path,out_path,row,col):
     for ii in range(num_files):
         if 'buildings' in files[ii]:
             target_filename.append(files[ii])
+
     print(target_filename)
 
     # Create a file to summarize all the alignment vectors
@@ -158,10 +170,10 @@ def list_rows_cols(modality,folder):
     
     return rows,cols
 
-# Path to folder holding tiles for translation. Folder should contain tiles only.
-in_folder='/PROJECTS/CORE3D/05_python_dev/input_tif/'
-# Path to save translated tiles
-out_folder='/PROJECTS/CORE3D/05_python_dev/output_tif/'
+## Path to folder holding tiles for translation. Folder should contain tiles only.
+in_folder='/PROJECTS/CORE3D/06_data/Jacksonville/in_tiles/'
+## Path to save translated tiles
+out_folder='/PROJECTS/CORE3D/06_data/Jacksonville/out_tiles/'
 
 # Find all the tiles with building shape files
 rows,cols = list_rows_cols('buildings',in_folder)
