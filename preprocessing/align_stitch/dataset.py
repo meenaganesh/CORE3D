@@ -4,7 +4,7 @@ import os
 import shutil
 from osgeo import gdal,osr
 import tempfile
-from core3d.preprocessing.WVCalKernel import RadiometricCalibrator
+from preprocessing.align_stitch.WVCalKernel import RadiometricCalibrator
 
 
 logger = logging.getLogger(__name__)
@@ -196,12 +196,12 @@ class DataSet:
 if __name__ == "__main__":
     ds = DataSet()
 
-    out_dir = '/raid/data/wdixon/output/jacksonville'
-    dir = '/raid/data/wdixon/jacksonville/satellite_imagery/'
-    shape_file = '/raid/data/wdixon/jacksonville/open_street_map/SHP/ex_FgMKU8FtfzgKJNgmUTE7T3Y5E1cgb_osm_buildings.shp'
+    out_dir = '/home/sernamlim/data/CORE3D/jacksonville/output/'
+    dir = '/home/sernamlim/data/CORE3D/jacksonville/satellite_imagery/'
+    shape_file = '/home/sernamlim/data/CORE3D/jacksonville/open_street_map/SHP/ex_FgMKU8FtfzgKJNgmUTE7T3Y5E1cgb_osm_buildings.shp'
     ds.set_output_extents(os.path.join(out_dir,'ext.txt'))
 
-    ds.add_las_set('laz', '/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data','*.laz')
+    ds.add_las_set('laz', '/home/sernamlim/data/CORE3D/jacksonville/pc/Vricon_Point_Cloud/data','*.laz')
 
     ds.calibrate_raster_set(dir,'WV2/MSI', "*.NTF", out_dir, '_cal.tif')
     ds.calibrate_raster_set(dir,'WV2/PAN', "*.NTF", out_dir, '_cal.tif')
@@ -216,5 +216,5 @@ if __name__ == "__main__":
     ds.add_raster_set('wv3_msi',os.path.join(out_dir,'WV3/MSI'), "*.tif")
     ds.add_shape_set('buildings', shape_file, 255)
 
-    ds.create_tiles('/raid/data/wdixon/output')
+    ds.create_tiles('/home/sernamlim/data/CORE3D/jacksonville/output')
 
