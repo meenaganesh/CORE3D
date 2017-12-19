@@ -153,9 +153,11 @@ class RadiometricCalibrator:
             self.raster_array = sub_array
         self.calibrated_array = np.zeros(self.raster_array.shape)
 
-    def get_cal_params(self, filename):
+    @staticmethod
+    def get_cal_params(filename):
         ds = gdal.Open(filename)
         md = ds.GetMetadata()
+        del ds
         sensor = md['NITF_PIAIMC_SENSNAME']
         if(sensor == 'WV03'):
             return WV3params()
