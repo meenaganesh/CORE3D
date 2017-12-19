@@ -1,12 +1,17 @@
 import glob
 import logging
 import re
-
 import mercantile
-
 from gdal_retile import *
 
 logger = logging.getLogger(__name__)
+
+
+class TileInfo:
+    def __init__(self, file, type, interp):
+        self.file = file
+        self.type = type
+        self.interp = interp    # nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode
 
 
 class TileMaker:
@@ -15,36 +20,35 @@ class TileMaker:
         self.no_data = 0
         self.tile_x = 8192
         self.tile_y = 8192
-        self.resample = 'lanczos'  # nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode
         self.out_folder = out_folder
         self.rasters = []
 
-    def add_rasters(self, pattern):
-        files = sorted(glob.glob(pattern))
-        self.rasters.extend(files)
+    def add_rasters(self, pattern, type, interp='lanczos'):
+        for f in sorted(glob.glob(pattern)):
+            self.add_raster(f, type, interp)
 
-    def add_raster(self, raster):
-        self.rasters.append(raster)
+    def add_raster(self, raster, type, interp='lanczos'):
+        self.rasters.append(TileInfo(raster, type, interp))
 
     def create_all_tiles(self):
-        for file in self.rasters:
-            self._create_tiles_file_extent(file, postfix=self._postfix_file(file))
+        for tr in self.rasters:
+            self._create_tiles_file_extent(tr.file, postfix=self._postfix_file(tr.file), interp=tr.interp)
 
     def create_tiles_xy(self, x, y):
         result = []
         tile = mercantile.Tile(x, y, self.zoom)
-        for file in self.rasters:
-            result.append(self._create_single_tile(tile, file, postfix=self._postfix_file(file)))
+        for tr in self.rasters:
+            result.append(self._create_single_tile(tile, tr.file, postfix=self._postfix_file(tr.file), interp=tr.interp))
         return result
 
     def create_tiles_deg(self, lng, lat):
         result = []
         tile = mercantile.tile(lng=lng, lat=lat, zoom=self.zoom)
-        for file in self.rasters:
-            result.append(self._create_single_tile(tile, file, postfix=self._postfix_file(file)))
+        for tr in self.rasters:
+            result.append(self._create_single_tile(tile, tr.file, postfix=self._postfix_file(tr.file), interp=tr.interp))
         return result
 
-    def _create_single_tile(self, tile, in_file, prefix='', postfix=''):
+    def _create_single_tile(self, tile, in_file, prefix='', postfix='', interp='lanczos'):
         name = "{}_{}".format(tile.x, tile.y)
 
         tile_folder = os.path.join(self.out_folder, name)
@@ -61,14 +65,19 @@ class TileMaker:
             y_res = abs(bb.north - bb.south) / self.tile_y  # changes with lat
 
             # When we select the projection - we will grow by a pixel in all directions to handle partial pixel
-            cmd = 'gdal_translate -r {} -tr {} {} -projwin {} {} {} {} -a_nodata {} -co COMPRESS=LZW {} {}'.format(
-                self.resample, x_res, y_res, bb.west - x_res, bb.north + y_res, bb.east + x_res,
+
+            r = ''
+            if interp is not None:
+                r = "-r {}".format(interp)
+
+            cmd = 'gdal_translate {} -tr {} {} -projwin {} {} {} {} -a_nodata {} -co COMPRESS=LZW {} {}'.format(
+                r, x_res, y_res, bb.west - x_res, bb.north + y_res, bb.east + x_res,
                 bb.south - y_res, self.no_data, in_file, out_file)
             logging.info(cmd)
             os.system(cmd)
         return out_file
 
-    def _create_tiles_file_extent(self, in_file, prefix='', postfix=''):
+    def _create_tiles_file_extent(self, in_file, prefix='', postfix='',interp='lanczos'):
         ds = gdal.Open(in_file)
         geo = ds.GetGeoTransform()
         ds.close()
@@ -83,26 +92,14 @@ class TileMaker:
 
         result = []
         for t in tiles:
-            result.append(self._create_single_tile(t, in_file, prefix, postfix))
+            result.append(self._create_single_tile(t, in_file, prefix, postfix, interp))
         return result
 
     @staticmethod
     def _postfix_file(file):
         name = os.path.basename(file)
-        postfix = ''
+        postfix = '_' + os.path.splitext(os.path.basename(name))[0]
         m = re.search('([^-]+-[^-]+)', name)
         if m is not None:
             postfix = '_' + m.group(1)
         return postfix
-
-
-if __name__ == "__main__":
-    wv3p = '/raid/data/wdixon/output/jacksonville/WV3/PAN'
-    wv3m = '/raid/data/wdixon/output/jacksonville/WV3/MSI'
-    wv3s = '/raid/data/wdixon/output/jacksonville/WV3/SWIR'
-
-    rt = TileMaker('/raid/data/wdixon/output2')
-    # rt.add_rasters('/raid/data/wdixon/output/jacksonville/buildings.tif')
-    # rt.add_rasters('/raid/data/wdixon/output/jacksonville/WV3/PAN/*.tif')
-    # rt.add_rasters('/raid/data/wdixon/output/jacksonville/WV3/MSI/*.tif')
-    rt.create_tiles_xy(4476, 6743)

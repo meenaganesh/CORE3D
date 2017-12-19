@@ -158,11 +158,12 @@ class RadiometricCalibrator:
         ds = gdal.Open(filename)
         md = ds.GetMetadata()
         del ds
-        sensor = md['NITF_PIAIMC_SENSNAME']
-        if(sensor == 'WV03'):
-            return WV3params()
-        elif(sensor == 'WV02'):
-            return WV2params()
+        if 'NITF_PIAIMC_SENSNAME' in md:
+            sensor = md['NITF_PIAIMC_SENSNAME']
+            if(sensor == 'WV03'):
+                return WV3params()
+            elif(sensor == 'WV02'):
+                return WV2params()
         return None
 
     def set_tar(self, tar_file):
