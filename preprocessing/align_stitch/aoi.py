@@ -189,14 +189,22 @@ class AOI:
 if __name__ == "__main__":
     # Below is an example of how to use this AOI pipeline
 
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)-5.5s]  %(message)s",
+        handlers=[
+            logging.FileHandler("aoi.log"),
+            logging.StreamHandler()
+        ])
+
     # Construct the AOI object - and set the output directory
     ds = AOI('/raid/data/wdixon/output3')
 
     # ds.set_output_extents(os.path.join(out_dir,'ext.txt'))
 
-    ds.add_pointcloud('/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data/*.laz','PC', 'jacksonville')
-    ds.add_vector('/raid/data/wdixon/jacksonville/open_street_map/newSHP/ex_6Nv2MxW21gh8ifRtwCb75mo8YRTjb_osm_buildings.shp', 'SHP', 'buildings', 255)
-    ds.add_raster('/raid/data/wdixon/jacksonville/pc/vricon_raster_50cm/classification/data/classification_4326.tif', 'CLS', False, None)
+    #ds.add_pointcloud('/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data/*.laz','PC', 'jacksonville')
+    #ds.add_vector('/raid/data/wdixon/jacksonville/open_street_map/newSHP/ex_6Nv2MxW21gh8ifRtwCb75mo8YRTjb_osm_buildings.shp', 'SHP', 'buildings', 255)
+    #ds.add_raster('/raid/data/wdixon/jacksonville/pc/vricon_raster_50cm/classification/data/classification_4326.tif', 'CLS', False, None)
     ds.add_rasters('/raid/data/wdixon/jacksonville/satellite_imagery/WV3/MSI/*.NTF', 'WV3/MSI')
     ds.add_rasters('/raid/data/wdixon/jacksonville/satellite_imagery/WV3/PAN/*.NTF', 'WV3/PAN')
 
@@ -204,6 +212,8 @@ if __name__ == "__main__":
 
     reg = RegisterImage('/raid/data/wdixon/output3/4476_6743/4476_6743_27JAN15WV031100015JAN27160845-P1BS.tif')
     for tile_in in tile_files:
-        tile_out = os.path.join(os.path.dirname(tile_in), os.path.splitext(os.path.basename(tile_in))[0] + '_reg.tif')
-        reg.register_image(tile_in, tile_out)
+        tile_out = os.path.join(os.path.dirname(tile_in), os.path.splitext(os.path.basename(tile_in))[0] + '_cv2_reg.tif')
+        # reg.register_image(tile_in, tile_out)
+        reg.register_image2(tile_in, tile_out)
+
 
