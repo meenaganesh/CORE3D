@@ -77,10 +77,33 @@ class RegisterImage:
             else:
                 translate_band = self.read_stretch_min_max(ds, 1)
 
-            translate_band = translate_band.astype(np.uint8)
-            result = ird.translation(self.reference_band, translate_band)
-            self.trans_geotiff_tile(file_in, file_out, result['tvec'])
-            logging.info("{} translated by {}".format(file_in, result['tvec']))
+            # Define motion model
+            warp_mode = cv2.MOTION_TRANSLATION
+
+            # Set the warp matrix to identity.
+            if warp_mode == cv2.MOTION_HOMOGRAPHY:
+                warp_matrix = np.eye(3, 3, dtype=np.float32)
+            else:
+                warp_matrix = np.eye(2, 3, dtype=np.float32)
+
+            # Set the stopping criteria for the algorithm.
+            criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 5000, 1e-10)
+
+            # Warp the blue and green channels to the red channel
+            # (cc, warp_matrix) = cv2.findTransformECC(self.get_gradient(self.reference_band.astype(np.float32)),
+            #                                          self.get_gradient(img.astype(np.float32)),
+            #                                          warp_matrix, warp_mode, criteria)
+            # Warp the blue and green channels to the red channel
+            (cc, warp_matrix) = cv2.findTransformECC(self.reference_band_f, translate_band.astype(np.float32),
+                                                     warp_matrix, warp_mode, criteria)
+            logging.info("CV2 {} translated by {}".format(file_in, warp_matrix))
+            tvec = [-warp_matrix[1, 2], -warp_matrix[0, 2]]  # y,x
+            self.trans_geotiff_tile(file_in, file_out, tvec)
+
+            # translate_band = translate_band.astype(np.uint8)
+            # result = ird.translation(self.reference_band, translate_band)
+            # self.trans_geotiff_tile(file_in, file_out, result['tvec'])
+            # logging.info("{} translated by {}".format(file_in, result['tvec']))
         del ds
 
     def get_gradient(self,im):

@@ -197,23 +197,53 @@ if __name__ == "__main__":
             logging.StreamHandler()
         ])
 
-    # Construct the AOI object - and set the output directory
-    ds = AOI('/raid/data/wdixon/output3')
+    # Construct the AOI object - and set the output directory.
+    # - By default a .cache subdirectory will be created for intermediate files.  If you wish you can override the
+    # location of the cache by supplying a 2nd argument to the AOI object constructor.
+    # - To ensure you aren't using cached files - you may wish to remove the cache before running.
+    # - Files are generally not overwritten.  If the target file exists, the generation of the target will
+    # be skipped, and the previously existing target will be incorporated into the results.
+    aoi = AOI('/raid/data/wdixon/output3')
 
-    # ds.set_output_extents(os.path.join(out_dir,'ext.txt'))
+    # Setting this will write the extent information for each of the added rasters, vectors and pointcloud data.
+    # This file is appended to - so remove if you which to only contain data from this run.
+    aoi.set_output_extents('/raid/data/wdixon/output3/ext.txt')
 
-    #ds.add_pointcloud('/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data/*.laz','PC', 'jacksonville')
-    #ds.add_vector('/raid/data/wdixon/jacksonville/open_street_map/newSHP/ex_6Nv2MxW21gh8ifRtwCb75mo8YRTjb_osm_buildings.shp', 'SHP', 'buildings', 255)
-    #ds.add_raster('/raid/data/wdixon/jacksonville/pc/vricon_raster_50cm/classification/data/classification_4326.tif', 'CLS', False, None)
-    ds.add_rasters('/raid/data/wdixon/jacksonville/satellite_imagery/WV3/MSI/*.NTF', 'WV3/MSI')
-    ds.add_rasters('/raid/data/wdixon/jacksonville/satellite_imagery/WV3/PAN/*.NTF', 'WV3/PAN')
+    # Point cloud data will be merged into a single raster - in the specified sub-directory using the supplied name
+    # for the raster file.
+    aoi.add_pointcloud('/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data/*.laz', 'PC', 'jacksonville')
 
-    tile_files = ds.get_tile_maker().create_tiles_xy(4476, 6743)
+    # A raster mask will be created from the vector data - in the specified sub-directory using the supplied name
+    # for the raster file. The last argument is the numerical value for the encountered shape.
+    aoi.add_vector('/raid/data/wdixon/jacksonville/open_street_map/newSHP/ex_6Nv2MxW21gh8ifRtwCb75mo8YRTjb_osm_buildings.shp', 'SHP', 'buildings', 255)
 
+    # You can add a single raster that is not radiometrically calibrated or interpolated
+    aoi.add_raster('/raid/data/wdixon/jacksonville/pc/vricon_raster_50cm/classification/data/classification_4326.tif', 'CLS', False, None)
+
+    # You can add rasters that will (by default) - be radiometrically calibrated
+    aoi.add_rasters('/raid/data/wdixon/jacksonville/satellite_imagery/WV3/MSI/*.NTF', 'WV3/MSI')
+    aoi.add_rasters('/raid/data/wdixon/jacksonville/satellite_imagery/WV3/PAN/*.NTF', 'WV3/PAN')
+
+    # Now you can generate the tiles.  You mah choose to generate just a single region designated by its x,y quad tree
+    # reference...  This will generate a separate tile for each input file covering this region.
+    tile_files = aoi.get_tile_maker().create_tiles_xy(4476, 6743)
+
+    # alternatively you can specify a point in lon, lat
+    # tile_files = aoi.get_tile_maker().create_tiles_deg(-81.3, 30.0)
+
+    # Or you may choose to generate all tiles for all extents based on the supplied input:
+    # tile_files = aoi.get_tile_maker().create_all_tiles()
+
+    # Now attempt to register the images to a reference image. It currently only makes sense to register the
+    # reference image for a single region (x,y or lon, lat).
+    #
+    # Note currently the output images are ~8K x 8K
+    # After registration, the images will be translated to the best match - in the future we may wish to generate
+    # the images slightly larger and trim after registration.  But for now we aren't all that concerned with
+    # stitching
     reg = RegisterImage('/raid/data/wdixon/output3/4476_6743/4476_6743_27JAN15WV031100015JAN27160845-P1BS.tif')
     for tile_in in tile_files:
         tile_out = os.path.join(os.path.dirname(tile_in), os.path.splitext(os.path.basename(tile_in))[0] + '_cv2_reg.tif')
-        # reg.register_image(tile_in, tile_out)
-        reg.register_image2(tile_in, tile_out)
+        reg.register_image(tile_in, tile_out)
 
 
