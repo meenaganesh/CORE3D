@@ -2,9 +2,12 @@ import glob
 import logging
 import os
 import shutil
+from typing import re
+
 from osgeo import gdal
 import tempfile
 
+from preprocessing.align_stitch import msi_to_rgb
 from preprocessing.align_stitch.RegisterImage import RegisterImage
 from preprocessing.align_stitch.TileMaker import TileMaker
 from preprocessing.align_stitch.WVCalKernel import RadiometricCalibrator
@@ -185,6 +188,42 @@ class AOI:
     def get_tile_maker(self):
         return self.tm
 
+    def filter_msi(self, files):
+        result = []
+        for f in files:
+            if(os.path.exists(f)):
+                ds = gdal.Open(f)
+                md = ds.GetMetadata()
+                del ds
+                if 'NITF_IREP' in md and md['NITF_IREP'] == 'MULTI':
+                    result.append(f)
+        return result
+
+    def filter_pan(self, files):
+        result = []
+        for f in files:
+            if(os.path.exists(f)):
+                ds = gdal.Open(f)
+                md = ds.GetMetadata()
+                del ds
+                if 'NITF_IREP' in md and md['NITF_IREP'] != 'MULTI':
+                    result.append(f)
+        return result
+
+    def pan_sharpen(self, pan, msi_list, pan_sharpened):
+        if os.path.exists(pan_sharpened):
+            logger.info('Skipping pan sharpen of {}, file exists.'.format(pan_sharpened))
+        else:
+            cmd = 'gdal_pansharpen.py {} -r lanczos '.format(pan)
+
+            dataset = pan.split("-")[0]
+            for f in msi_list:
+                if(f.split("-")[0] == dataset):
+#                cmd = cmd + '{},band=5 {},band=3 {},band=2 '.format(f,f,f)
+                    cmd = cmd + '{} '.format(f)
+                    cmd = cmd + pan_sharpened
+                    os.system(cmd)
+                    break
 
 if __name__ == "__main__":
     # Below is an example of how to use this AOI pipeline
@@ -220,30 +259,77 @@ if __name__ == "__main__":
     # You can add a single raster that is not radiometrically calibrated or interpolated
     aoi.add_raster('/raid/data/wdixon/jacksonville/pc/vricon_raster_50cm/classification/data/classification_4326.tif', 'CLS', False, None)
 
+    aoi.add_raster('/raid/data/wdixon/output3/.cache/WV3/PAN/01MAY15MANALIGN-P1BS_cal.tif', 'WV3/PAN', False)
+
     # You can add rasters that will (by default) - be radiometrically calibrated
     aoi.add_rasters('/raid/data/wdixon/jacksonville/satellite_imagery/WV3/MSI/*.NTF', 'WV3/MSI')
     aoi.add_rasters('/raid/data/wdixon/jacksonville/satellite_imagery/WV3/PAN/*.NTF', 'WV3/PAN')
 
     # Now you can generate the tiles.  You mah choose to generate just a single region designated by its x,y quad tree
     # reference...  This will generate a separate tile for each input file covering this region.
-    tile_files = aoi.get_tile_maker().create_tiles_xy(4476, 6743)
-
-    # alternatively you can specify a point in lon, lat
-    # tile_files = aoi.get_tile_maker().create_tiles_deg(-81.3, 30.0)
-
-    # Or you may choose to generate all tiles for all extents based on the supplied input:
     # tile_files = aoi.get_tile_maker().create_all_tiles()
 
-    # Now attempt to register the images to a reference image. It currently only makes sense to register the
-    # reference image for a single region (x,y or lon, lat).
-    #
-    # Note currently the output images are ~8K x 8K
-    # After registration, the images will be translated to the best match - in the future we may wish to generate
-    # the images slightly larger and trim after registration.  But for now we aren't all that concerned with
-    # stitching
-    reg = RegisterImage('/raid/data/wdixon/output3/4476_6743/4476_6743_27JAN15WV031100015JAN27160845-P1BS.tif')
-    for tile_in in tile_files:
-        tile_out = os.path.join(os.path.dirname(tile_in), os.path.splitext(os.path.basename(tile_in))[0] + '_cv2_reg.tif')
-        reg.register_image(tile_in, tile_out)
+    # tile_files = aoi.get_tile_maker().create_tiles_deg(-81.640245, 30.30948)
+
+    x1,y1 = aoi.tm.deg_to_xy(-81.719766, 30.340642)
+    x2,y2 = aoi.tm.deg_to_xy(-81.62187, 30.32112)
+
+    for x in range(x1+2,x2):
+        for y in range(y1+1,y2):
+            tile_files = []
+            # for x in range(35809, 35810):
+            #     for y in range(53946, 53948):
+            #         tile_files.extend(aoi.get_tile_maker().create_tiles_xy(x, y, border=100))
+
+            tile_files.extend(aoi.get_tile_maker().create_tiles_xy(x, y, border=100))
+
+
+            #    4476, 6743
+
+
+            # alternatively you can specify a point in lon, lat
+            # tile_files = aoi.get_tile_maker().create_tiles_deg(-81.3, 30.0)
+
+            # Or you may choose to generate all tiles for all extents based on the supplied input:
+            # tile_files = aoi.get_tile_maker().create_all_tiles()
+
+            # Now attempt to register the images to a reference image. It currently only makes sense to register the
+            # reference image for a single region (x,y or lon, lat).
+            #
+            # Note currently the output images are ~8K x 8K
+            # After registration, the images will be translated to the best match - in the future we may wish to generate
+            # the images slightly larger and trim after registration.  But for now we aren't all that concerned with
+            # stitching
+            # reg = RegisterImage('/raid/data/wdixon/output3/35810_53946/35810_53946_27JAN15WV031100015JAN27160845-P1BS.tif')
+
+            reg_tiles = []
+            for t in tile_files:
+                reg_to = glob.glob(os.path.join(os.path.dirname(t), '*MANALIGN-P1BS_cal.tif')) # '*27JAN15WV031100015JAN27160845-P1BS.tif'))
+                if reg_to is not None:
+                    reg = RegisterImage(reg_to[0])
+                    tile_out = os.path.join(os.path.dirname(t), os.path.splitext(os.path.basename(t))[0] + '_reg.tif')
+                    reg_tiles.append(tile_out)
+                    reg.register_image(t, tile_out)
+
+            cut_list = []
+            for t in reg_tiles:
+                cut_list.extend(aoi.get_tile_maker().create_tiles_xy2(x, y, t, 'cut', border=1))
+
+            pan_list = aoi.filter_pan(cut_list)
+            msi_list = aoi.filter_msi(cut_list)
+
+            for p in pan_list:
+                ps_out_base = os.path.join(os.path.dirname(p), os.path.splitext(os.path.basename(p))[0])
+                ps_out = ps_out_base + '_ps.tif'
+                rgb_out = ps_out_base + '_ps_rgb.tif'
+                aoi.pan_sharpen(p, msi_list, ps_out)
+                try:
+                    msi_to_rgb.msi_to_rgb(ps_out, rgb_out)
+                except AttributeError:
+                    logging.error("Not enough info to construct rgb {}".format(rgb_out))
+
+
+
+
 
 
