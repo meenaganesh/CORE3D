@@ -1,11 +1,11 @@
 
 # Controls where the output is written
-output: "/raid/data/wdixon/output3"
+output: "/raid/data/wdixon/output4"
 
 # Setting this will write the extent information for each of the added rasters, vectors and pointcloud data.
 # The RasterModalityFilter will allow you select images meeting certain extent criteria.
 # This file is appended to - so remove if you which to only contain data from this run.
-extents: "/raid/data/wdixon/output3/ext.txt"
+extents: "/raid/data/wdixon/output4/ext.txt"
 
 # Each set of point cloud files will be merged into a single raster
 # Each dataset appears in the sub-directory using the supplied name
@@ -39,6 +39,8 @@ rasters:
     dir: "WV3/MSI"
   - files: "/raid/data/wdixon/jacksonville/satellite_imagery/WV3/PAN/*.NTF"
     dir: "WV3/PAN"
+
+register: "*MANALIGN-P1BS_cal.tif"
 
 # Restricts the AOI to a bounding box (limits the tiles that are generated)
 aoi:

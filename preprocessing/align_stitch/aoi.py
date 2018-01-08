@@ -122,6 +122,7 @@ class AOI:
             files = sorted(glob.glob(file_pattern))
             for file in files:
                 c_dir = os.path.join(self.cache_dir, cat)
+                os.makedirs(c_dir, exist_ok=True)
                 tif_file = path_util.derived_path(file, alt_dir=c_dir, alt_ext='.tif')
                 tif_file_4326 = path_util.derived_path(file, '_4326', alt_dir=c_dir, alt_ext='.tif')
 
@@ -240,8 +241,6 @@ if __name__ == "__main__":
 
             aoi = AOI(cfg['output'])
 
-            # Setting this will write the extent information for each of the added rasters, vectors and pointcloud data.
-            # This file is appended to - so remove if you which to only contain data from this run.
             if 'extents' in cfg:
                 ext = cfg['extents']
                 if ext == 'None':
@@ -265,6 +264,10 @@ if __name__ == "__main__":
                         interp = None
                     aoi.add_rasters(r['files'], r['dir'], calibrate=calibrate, interp=interp)
 
+            reg_to_pattern = ''
+            if 'register' in cfg:
+                reg_to_pattern = cfg['register']
+
             if 'aoi' in cfg:
                 x1, y1 = aoi.tm.deg_to_xy(cfg['aoi']['west'], cfg['aoi']['north'])
                 x2, y2 = aoi.tm.deg_to_xy(cfg['aoi']['east'], cfg['aoi']['south'])
@@ -275,13 +278,12 @@ if __name__ == "__main__":
                         tile_files.extend(aoi.tm.create_tiles_xy(x, y, border=100))
 
                         # Now attempt to register the images to a reference image.
-                        # It currently only makes sense to register the
+                        # TODO: It currently only makes sense to register the
                         # reference image for a single region (x,y or lon, lat).
 
                         reg_tiles = []
                         for t in tile_files:
-                            reg_to = glob.glob(os.path.join(os.path.dirname(t),
-                                                            '*MANALIGN-P1BS_cal.tif'))  # '*27JAN15WV031100015JAN27160845-P1BS.tif'))
+                            reg_to = glob.glob(os.path.join(os.path.dirname(t), reg_to_pattern))
                             if reg_to is not None:
                                 reg = RegisterImage(reg_to[0])
                                 tile_out = path_util.derived_path(t, '_reg')
@@ -306,101 +308,3 @@ if __name__ == "__main__":
 
         except yaml.YAMLError as exc:
             print(exc)
-
-
-    # # Construct the AOI object - and set the output directory.
-    # # - By default a .cache subdirectory will be created for intermediate files.  If you wish you can override the
-    # # location of the cache by supplying a 2nd argument to the AOI object constructor.
-    # # - To ensure you aren't using cached files - you may wish to remove the cache before running.
-    # # - Files are generally not overwritten.  If the target file exists, the generation of the target will
-    # # be skipped, and the previously existing target will be incorporated into the results.
-    # aoi = AOI('/raid/data/wdixon/output3')
-    #
-    # # Setting this will write the extent information for each of the added rasters, vectors and pointcloud data.
-    # # This file is appended to - so remove if you which to only contain data from this run.
-    # aoi.set_output_extents('/raid/data/wdixon/output3/ext.txt')
-    #
-    # # Point cloud data will be merged into a single raster - in the specified sub-directory using the supplied name
-    # # for the raster file.
-    # aoi.add_pointcloud('/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data/*.laz', 'PC', 'jacksonville')
-    #
-    # # A raster mask will be created from the vector data - in the specified sub-directory using the supplied name
-    # # for the raster file. The last argument is the numerical value for the encountered shape.
-    # aoi.add_vector('/raid/data/wdixon/jacksonville/open_street_map/newSHP/ex_6Nv2MxW21gh8ifRtwCb75mo8YRTjb_osm_buildings.shp', 'SHP', 'buildings', 255)
-    #
-    # # You can add a single raster that is not radiometrically calibrated or interpolated
-    # aoi.add_raster('/raid/data/wdixon/jacksonville/pc/vricon_raster_50cm/classification/data/classification_4326.tif', 'CLS', False, None)
-    #
-    # aoi.add_raster('/raid/data/wdixon/output3/.cache/WV3/PAN/01MAY15MANALIGN-P1BS_cal.tif', 'WV3/PAN', False)
-    #
-    # # You can add rasters that will (by default) - be radiometrically calibrated
-    # aoi.add_rasters('/raid/data/wdixon/jacksonville/satellite_imagery/WV3/MSI/*.NTF', 'WV3/MSI')
-    # aoi.add_rasters('/raid/data/wdixon/jacksonville/satellite_imagery/WV3/PAN/*.NTF', 'WV3/PAN')
-    #
-    # # Now you can generate the tiles.  You mah choose to generate just a single region designated by its x,y quad tree
-    # # reference...  This will generate a separate tile for each input file covering this region.
-    # # tile_files = aoi.get_tile_maker().create_all_tiles()
-    #
-    # # tile_files = aoi.get_tile_maker().create_tiles_deg(-81.640245, 30.30948)
-    #
-    # x1,y1 = aoi.tm.deg_to_xy(-81.719766, 30.340642)
-    # x2,y2 = aoi.tm.deg_to_xy(-81.62187, 30.32112)
-    #
-    # for x in range(x1+2,x2):
-    #     for y in range(y1+1,y2):
-    #         tile_files = []
-    #         # for x in range(35809, 35810):
-    #         #     for y in range(53946, 53948):
-    #         #         tile_files.extend(aoi.get_tile_maker().create_tiles_xy(x, y, border=100))
-    #
-    #         tile_files.extend(aoi.tm.create_tiles_xy(x, y, border=100))
-    #
-    #
-    #         #    4476, 6743
-    #
-    #
-    #         # alternatively you can specify a point in lon, lat
-    #         # tile_files = aoi.get_tile_maker().create_tiles_deg(-81.3, 30.0)
-    #
-    #         # Or you may choose to generate all tiles for all extents based on the supplied input:
-    #         # tile_files = aoi.get_tile_maker().create_all_tiles()
-    #
-    #         # Now attempt to register the images to a reference image. It currently only makes sense to register the
-    #         # reference image for a single region (x,y or lon, lat).
-    #         #
-    #         # Note currently the output images are ~8K x 8K
-    #         # After registration, the images will be translated to the best match - in the future we may wish to generate
-    #         # the images slightly larger and trim after registration.  But for now we aren't all that concerned with
-    #         # stitching
-    #         # reg = RegisterImage('/raid/data/wdixon/output3/35810_53946/35810_53946_27JAN15WV031100015JAN27160845-P1BS.tif')
-    #
-    #         reg_tiles = []
-    #         for t in tile_files:
-    #             reg_to = glob.glob(os.path.join(os.path.dirname(t), '*MANALIGN-P1BS_cal.tif')) # '*27JAN15WV031100015JAN27160845-P1BS.tif'))
-    #             if reg_to is not None:
-    #                 reg = RegisterImage(reg_to[0])
-    #                 tile_out = path_util.derived_path(t, '_reg')
-    #                 reg_tiles.append(tile_out)
-    #                 reg.register_image(t, tile_out)
-    #
-    #         cut_list = []
-    #         for t in reg_tiles:
-    #             cut_list.extend(aoi.tm.create_tiles_xy2(x, y, t, 'cut', border=1))
-    #
-    #         pan_list = aoi.filter_pan(cut_list)
-    #         msi_list = aoi.filter_msi(cut_list)
-    #
-    #         for p in pan_list:
-    #             ps_out = path_util.derived_path(p, '_ps')
-    #             rgb_out = path_util.derived_path(p, '_ps_rgb')
-    #             aoi.pan_sharpen(p, msi_list, ps_out)
-    #             try:
-    #                 msi_to_rgb.msi_to_rgb(ps_out, rgb_out)
-    #             except AttributeError:
-    #                 logging.error("Not enough info to construct rgb {}".format(rgb_out))
-    #
-    #
-    #
-
-
-
