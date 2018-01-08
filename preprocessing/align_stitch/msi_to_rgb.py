@@ -78,7 +78,6 @@ def msi_to_rgb(in_file, out_file):
 
     zzz = [r,g,b]
 
-
     create_output_image(ds, out_file, zzz)
     del ds
 

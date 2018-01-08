@@ -5,7 +5,6 @@ import shutil
 import cv2 as cv2
 import numpy as np
 from osgeo import gdal
-import imreg_dft as ird
 
 logger = logging.getLogger(__name__)
 

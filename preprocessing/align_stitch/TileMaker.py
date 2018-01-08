@@ -42,7 +42,7 @@ class TileMaker:
         x = mercantile.bounds(tile)
 
         t_bb = shapely.geometry.geo.box(min(x.west, x.east), min(x.north, x.south),
-                                      max(x.west, x.east), max(x.north, x.south))
+                                        max(x.west, x.east), max(x.north, x.south))
         t_region = Polygon(t_bb)
         return f_region.intersects(t_region)
 

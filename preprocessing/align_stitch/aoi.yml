@@ -1,0 +1,48 @@
+
+# Controls where the output is written
+output: "/raid/data/wdixon/output3"
+
+# Setting this will write the extent information for each of the added rasters, vectors and pointcloud data.
+# The RasterModalityFilter will allow you select images meeting certain extent criteria.
+# This file is appended to - so remove if you which to only contain data from this run.
+extents: "/raid/data/wdixon/output3/ext.txt"
+
+# Each set of point cloud files will be merged into a single raster
+# Each dataset appears in the sub-directory using the supplied name
+point_clouds:
+  - files: "/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data/*.laz"
+    dir: "PC"
+    name: "jacksonville"
+
+# A raster mask will be created from the vector data - in the specified sub-directory using the supplied name
+# for the raster file. The burn argument is the numerical value for the encountered shape.
+vectors:
+  - files: "/raid/data/wdixon/jacksonville/open_street_map/newSHP/ex_6Nv2MxW21gh8ifRtwCb75mo8YRTjb_osm_buildings.shp"
+    dir: "SHP"
+    name: "buildings"
+    burn: 255
+
+
+# Adds rasters using the supplied file name patten (including wild-cards)
+# calibrate: (boolean) indicating radiometric calibration is to be performed (default: True)
+# dir: (str) sub-directory under output to place the files
+# interpolation: (str) interpolation method used when rasterizing (default: "lanczos")
+rasters:
+  - files: "/raid/data/wdixon/jacksonville/pc/vricon_raster_50cm/classification/data/classification_4326.tif"
+    dir: "CLS"
+    calibrate: False
+    interpolation: "None"
+  - files: "/raid/data/wdixon/output3/.cache/WV3/PAN/01MAY15MANALIGN-P1BS_cal.tif"
+    dir: "WV3/PAN"
+    calibrate: False
+  - files: "/raid/data/wdixon/jacksonville/satellite_imagery/WV3/MSI/*.NTF"
+    dir: "WV3/MSI"
+  - files: "/raid/data/wdixon/jacksonville/satellite_imagery/WV3/PAN/*.NTF"
+    dir: "WV3/PAN"
+
+# Restricts the AOI to a bounding box (limits the tiles that are generated)
+aoi:
+  west: -81.719766
+  north: 30.340642
+  east: -81.62187
+  south: 30.32112
