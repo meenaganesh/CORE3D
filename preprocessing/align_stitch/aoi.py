@@ -112,6 +112,10 @@ class AOI:
             tdir = tempfile.mkdtemp()
             jfile = os.path.join(tdir, 'laz.json')
 
+            # We can change the dimension of PC data used to raster (by default its Z), but you can also choose
+            # Intensity... "dimension" : "Intensity"
+            # also you can limit the output_type to min,max, etc..
+            # "output_type":"max",
             json = '{"pipeline": [ {"type": "readers.las", "filename": "dummy_in" },' + \
                    '{"type": "writers.gdal", "data_type": "float", "nodata": '+str(self.f_nodata)+', ' +\
                    '"resolution": 0.5, "radius": 1, "filename": "dummy_out" }]}'
