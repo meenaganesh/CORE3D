@@ -38,9 +38,8 @@ The YAML configuration file provides the tiling routines with the set of files t
 has been provided (aoi.yml), which includes additional comments on the various configuration parameters.
 
  - if python complains missing path, please simply "export PYTHONPATH=path_to_CORE3d_on_your_host"
- - for 3D laz, we only generate the Z values into a raster image, but a laz contains a lot of information, and you can            
-   modify line 131 "type" to generate raster of the 3D laz with more information than Z, such as intensity 
-
+ - for 3D laz, we are presently only generating the Z values into statistical bands (min, max, mean, idx, count, stdev).
+   Soon the configuration will be updated to all you to specify the desired dimension and bands.
 
 ## Examine the output:
 
