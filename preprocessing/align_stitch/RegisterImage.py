@@ -54,12 +54,12 @@ class RegisterImage:
     def register_image(self, file_in, file_out):
         if file_in == self.reference:
             logging.warning("Asked to register reference image {}, skipping...".format(file_in))
-            return
+            return False
         if os.path.exists(file_out):
             logging.info("File exists {}, skipping...".format(file_out))
-            return
+            return True
         if not os.path.exists(file_in):
-            return
+            return False
 
         ds = gdal.Open(file_in)
         try:
@@ -69,6 +69,8 @@ class RegisterImage:
 
         if 'NITF_PIAIMC_SENSNAME' not in md:
             logging.info("Skipping registration of {}, skipping...".format(file_in))
+            del ds
+            return False
         else:
             sensor = md['NITF_PIAIMC_SENSNAME']
             type = md['NITF_IREP']
@@ -80,6 +82,7 @@ class RegisterImage:
                 translate_band = R * .299 + G * .587 + B * .114
             else:
                 translate_band = self.read_stretch_min_max(ds, 1)
+            del ds
 
             # Define motion model
             warp_mode = cv2.MOTION_TRANSLATION
@@ -105,14 +108,15 @@ class RegisterImage:
                 logging.info("CV2 {} translated by {}".format(file_in, warp_matrix))
                 tvec = [-warp_matrix[1, 2], -warp_matrix[0, 2]]  # y,x
                 self.trans_geotiff_tile(file_in, file_out, tvec)
+                return True
             except:
                 logging.error("Unable to align {}".format(file_in))
+        return False
 
             # translate_band = translate_band.astype(np.uint8)
             # result = ird.translation(self.reference_band, translate_band)
             # self.trans_geotiff_tile(file_in, file_out, result['tvec'])
             # logging.info("{} translated by {}".format(file_in, result['tvec']))
-        del ds
 
     def get_gradient(self,im):
         # Calculate the x and y gradients using Sobel operator

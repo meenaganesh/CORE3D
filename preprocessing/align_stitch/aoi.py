@@ -122,16 +122,6 @@ class AOI:
         # stdev). The bands can be controlled by setting the output_type attribute to a comma separated list of
         # statistics for which to produce raster bands. The supported values are “min”, “max”, “mean”, “idw”,
         # “count”, “stdev” and “all”. For example:
-        #
-        # "output_type":"max,min"
-        #
-        # merged = os.path.join(self.cache_dir, cat, name + '.laz')
-        # os.makedirs(os.path.dirname(merged), exist_ok=True)
-        # if os.path.exists(merged):
-        #     logger.info('Skipping merge of {}, file exists.'.format(merged))
-        # else:
-        #     cmd = 'pdal merge {} {}'.format(file_pattern, merged)
-        #     os.system(cmd)
 
         for dim in dimensions.split(","):
 
@@ -152,30 +142,10 @@ class AOI:
                 with open(jfile, 'w') as f:
                     f.write(json)
 
-                # c_dir = os.path.join(self.out_dir, cat)
-                # os.makedirs(c_dir, exist_ok=True)
-                # tif_file = os.path.join(c_dir, name + '_' + dim + '.tif')
-                # tif_file_4326 = path_util.derived_path(tif_file, '_4326', alt_dir=c_dir, alt_ext='.tif')
-                #
-                # if os.path.exists(tif_file_4326):
-                #     logger.info('Skipping raster projection {}, file exists.'.format(tif_file_4326))
-                # else:
-                #     if os.path.exists(tif_file):
-                #         logger.info('Skipping raster {}, file exists.'.format(tif_file))
-                #     else:
-                #         exe = 'pdal pipeline -i {} --readers.las.filename={} --writers.gdal.filename={}'\
-                #             .format(jfile, merged, tif_file)
-                #         os.system(exe)
-                #
-                #     exe = 'gdalwarp -t_srs EPSG:4326 {} {}'.format(tif_file, tif_file_4326)
-                #     os.system(exe)
-                #     os.unlink(tif_file)
-                # shutil.rmtree(tdir)
-
+                c_dir = os.path.join(self.cache_dir, cat)
+                os.makedirs(c_dir, exist_ok=True)
                 files = sorted(glob.glob(file_pattern))
                 for file in files:
-                    c_dir = os.path.join(self.cache_dir, cat)
-                    os.makedirs(c_dir, exist_ok=True)
                     tif_file = path_util.derived_path(file, '_'+dim, alt_dir=c_dir, alt_ext='.tif')
                     tif_file_4326 = path_util.derived_path(file, '_'+dim+'_4326', alt_dir=c_dir, alt_ext='.tif')
 
@@ -194,12 +164,13 @@ class AOI:
                         os.unlink(tif_file)
 
                 vrt = os.path.join(tdir, name + '.vrt')
-                cmd = 'gdalbuildvrt {} {}'.format(vrt, os.path.join(self.cache_dir, cat, '*_4326.tif'))
+                cmd = 'gdalbuildvrt {} {}'.format(vrt, os.path.join(self.cache_dir, cat, '*_'+dim+'_4326.tif'))
                 os.system(cmd)
 
                 cmd = 'gdal_translate {} {}'.format(vrt, out)
                 os.system(cmd)
                 shutil.rmtree(tdir)
+                shutil.rmtree(c_dir)
 
             self.add_raster(out, cat, False, 'lanczos')
 

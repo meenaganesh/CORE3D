@@ -13,32 +13,34 @@ point_clouds:
   - files: "/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data/*.laz"
     dir: "PC"
     name: "jacksonville"
+    dimensions: "Z,Intensity,Red,Green,Blue"
+    statistics: "min,max,mean,idw,count,stdev"
 
 # A raster mask will be created from the vector data - in the specified sub-directory using the supplied name
 # for the raster file. The burn argument is the numerical value for the encountered shape.
-vectors:
-  - files: "/raid/data/wdixon/jacksonville/open_street_map/newSHP/ex_6Nv2MxW21gh8ifRtwCb75mo8YRTjb_osm_buildings.shp"
-    dir: "SHP"
-    name: "buildings"
-    burn: 255
+#vectors:
+#  - files: "/raid/data/wdixon/jacksonville/open_street_map/newSHP/ex_6Nv2MxW21gh8ifRtwCb75mo8YRTjb_osm_buildings.shp"
+#    dir: "SHP"
+#    name: "buildings"
+#    burn: 255
 
-
-# Adds rasters using the supplied file name patten (including wild-cards)
-# calibrate: (boolean) indicating radiometric calibration is to be performed (default: True)
-# dir: (str) sub-directory under output to place the files
-# interpolation: (str) interpolation method used when rasterizing (default: "lanczos")
-rasters:
-  - files: "/raid/data/wdixon/jacksonville/pc/vricon_raster_50cm/classification/data/classification_4326.tif"
-    dir: "CLS"
-    calibrate: False
-    interpolation: "None"
-  - files: "/raid/data/wdixon/output3/.cache/WV3/PAN/01MAY15MANALIGN-P1BS_cal.tif"
-    dir: "WV3/PAN"
-    calibrate: False
-  - files: "/raid/data/wdixon/jacksonville/satellite_imagery/WV3/MSI/*.NTF"
-    dir: "WV3/MSI"
-  - files: "/raid/data/wdixon/jacksonville/satellite_imagery/WV3/PAN/*.NTF"
-    dir: "WV3/PAN"
+#
+## Adds rasters using the supplied file name patten (including wild-cards)
+## calibrate: (boolean) indicating radiometric calibration is to be performed (default: True)
+## dir: (str) sub-directory under output to place the files
+## interpolation: (str) interpolation method used when rasterizing (default: "lanczos")
+#rasters:
+#  - files: "/raid/data/wdixon/jacksonville/pc/vricon_raster_50cm/classification/data/classification_4326.tif"
+#    dir: "CLS"
+#    calibrate: False
+#    interpolation: "None"
+#  - files: "/raid/data/wdixon/output3/.cache/WV3/PAN/01MAY15MANALIGN-P1BS_cal.tif"
+#    dir: "WV3/PAN"
+#    calibrate: False
+#  - files: "/raid/data/wdixon/jacksonville/satellite_imagery/WV3/MSI/*.NTF"
+#    dir: "WV3/MSI"
+#  - files: "/raid/data/wdixon/jacksonville/satellite_imagery/WV3/PAN/*.NTF"
+#    dir: "WV3/PAN"
 
 register: "*MANALIGN-P1BS_cal.tif"
 
