@@ -99,7 +99,11 @@ class AOI:
 
     def add_pointcloud(self, file_pattern, cat, name):
         """
-        Build a stitched raster for the point cloud data matching the given pattern
+        Build a stitched raster for the point cloud data matching the given pattern. The pointclouds are processed
+        by PDAL. PDAL will produce rasters for specific dimensions of the PC data. The individual PC data typically
+        represents a narrow strip of recon.  Each of the narrow raster strips are then composed into a single raster
+        using gdal vrt.
+
         :param file_pattern:
         :param cat:
         :param name:
@@ -112,6 +116,20 @@ class AOI:
             tdir = tempfile.mkdtemp()
             jfile = os.path.join(tdir, 'laz.json')
 
+            # The following configuration controls how the rasters are produced. By default PDAL will choose the
+            # Z dimension, unless specified. Depending on how complete the PC data is, there may be more dimensions
+            # available to choose from. Typical dimensions are X, Y, Z (default), Intensity, Classification, Red,
+            # Green, Blue. You can choose the dimension by adding the dimension tag to the json.  For example:
+            #
+            # "dimension" : "Intensity"
+            #
+            # By default, a 6 band raster will be produced with the following defintions: (min, max, mean, idx, count,
+            # stdev). The bands can be controlled by setting the output_type attribute to a comma separated list of
+            # statistics for which to produce raster bands. The supported values are “min”, “max”, “mean”, “idw”,
+            # “count”, “stdev” and “all”. For example:
+            #
+            # "output_type":"max,min"
+            #
             json = '{"pipeline": [ {"type": "readers.las", "filename": "dummy_in" },' + \
                    '{"type": "writers.gdal", "data_type": "float", "nodata": '+str(self.f_nodata)+', ' +\
                    '"resolution": 0.5, "radius": 1, "filename": "dummy_out" }]}'
