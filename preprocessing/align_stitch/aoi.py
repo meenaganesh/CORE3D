@@ -97,7 +97,7 @@ class AOI:
                 logger.info('Calibrated {}.'.format(out_path))
         return out_path
 
-    def add_pointcloud(self, file_pattern, cat, name):
+    def add_pointcloud(self, file_pattern, cat, name, dimensions, statistics):
         """
         Build a stitched raster for the point cloud data matching the given pattern. The pointclouds are processed
         by PDAL. PDAL will produce rasters for specific dimensions of the PC data. The individual PC data typically
@@ -107,66 +107,101 @@ class AOI:
         :param file_pattern:
         :param cat:
         :param name:
+        :param dimensions:
+        :param statistics:
         :return:
         """
-        out = os.path.join(self.cache_dir, cat, name + '.tif')
-        if not os.path.exists(out):
-            logger.info('Skipping raster of {}, file exists.'.format(out))
+        # The following configuration controls how the rasters are produced. By default PDAL will choose the
+        # Z dimension, unless specified. Depending on how complete the PC data is, there may be more dimensions
+        # available to choose from. Typical dimensions are X, Y, Z (default), Intensity, Classification, Red,
+        # Green, Blue. You can choose the dimension by adding the dimension tag to the json.  For example:
+        #
+        # "dimension" : "Intensity"
+        #
+        # By default, a 6 band raster will be produced with the following defintions: (min, max, mean, idx, count,
+        # stdev). The bands can be controlled by setting the output_type attribute to a comma separated list of
+        # statistics for which to produce raster bands. The supported values are “min”, “max”, “mean”, “idw”,
+        # “count”, “stdev” and “all”. For example:
+        #
+        # "output_type":"max,min"
+        #
+        # merged = os.path.join(self.cache_dir, cat, name + '.laz')
+        # os.makedirs(os.path.dirname(merged), exist_ok=True)
+        # if os.path.exists(merged):
+        #     logger.info('Skipping merge of {}, file exists.'.format(merged))
+        # else:
+        #     cmd = 'pdal merge {} {}'.format(file_pattern, merged)
+        #     os.system(cmd)
 
-            tdir = tempfile.mkdtemp()
-            jfile = os.path.join(tdir, 'laz.json')
+        for dim in dimensions.split(","):
 
-            # The following configuration controls how the rasters are produced. By default PDAL will choose the
-            # Z dimension, unless specified. Depending on how complete the PC data is, there may be more dimensions
-            # available to choose from. Typical dimensions are X, Y, Z (default), Intensity, Classification, Red,
-            # Green, Blue. You can choose the dimension by adding the dimension tag to the json.  For example:
-            #
-            # "dimension" : "Intensity"
-            #
-            # By default, a 6 band raster will be produced with the following defintions: (min, max, mean, idx, count,
-            # stdev). The bands can be controlled by setting the output_type attribute to a comma separated list of
-            # statistics for which to produce raster bands. The supported values are “min”, “max”, “mean”, “idw”,
-            # “count”, “stdev” and “all”. For example:
-            #
-            # "output_type":"max,min"
-            #
-            json = '{"pipeline": [ {"type": "readers.las", "filename": "dummy_in" },' + \
-                   '{"type": "writers.gdal", "data_type": "float", "nodata": '+str(self.f_nodata)+', ' +\
-                   '"resolution": 0.5, "radius": 1, "filename": "dummy_out" }]}'
+            out = os.path.join(self.out_dir, cat, name + '_' + dim + '.tif')
 
-            with open(jfile, 'w') as f:
-                f.write(json)
+            if os.path.exists(out):
+                logger.info('Skipping raster of {}, file exists.'.format(out))
+            else:
+                os.makedirs(os.path.dirname(out), exist_ok=True)
+                tdir = tempfile.mkdtemp()
+                jfile = os.path.join(tdir, 'laz.json')
 
-            files = sorted(glob.glob(file_pattern))
-            for file in files:
-                c_dir = os.path.join(self.cache_dir, cat)
-                os.makedirs(c_dir, exist_ok=True)
-                tif_file = path_util.derived_path(file, alt_dir=c_dir, alt_ext='.tif')
-                tif_file_4326 = path_util.derived_path(file, '_4326', alt_dir=c_dir, alt_ext='.tif')
+                json = '{"pipeline": [ {"type": "readers.las", "filename": "dummy_in" },' + \
+                       '{"type": "writers.gdal", "data_type": "float", "nodata": ' + str(self.f_nodata) + ', ' + \
+                       '"resolution": 0.5, "radius": 1, "dimension":"' + dim + '", ' + \
+                       '"output_type":"' + statistics + '", "filename": "dummy_out" }]}'
 
-                if os.path.exists(tif_file_4326):
-                    logger.info('Skipping raster projection {}, file exists.'.format(tif_file_4326))
-                else:
-                    if os.path.exists(tif_file):
-                        logger.info('Skipping raster {}, file exists.'.format(tif_file))
+                with open(jfile, 'w') as f:
+                    f.write(json)
+
+                # c_dir = os.path.join(self.out_dir, cat)
+                # os.makedirs(c_dir, exist_ok=True)
+                # tif_file = os.path.join(c_dir, name + '_' + dim + '.tif')
+                # tif_file_4326 = path_util.derived_path(tif_file, '_4326', alt_dir=c_dir, alt_ext='.tif')
+                #
+                # if os.path.exists(tif_file_4326):
+                #     logger.info('Skipping raster projection {}, file exists.'.format(tif_file_4326))
+                # else:
+                #     if os.path.exists(tif_file):
+                #         logger.info('Skipping raster {}, file exists.'.format(tif_file))
+                #     else:
+                #         exe = 'pdal pipeline -i {} --readers.las.filename={} --writers.gdal.filename={}'\
+                #             .format(jfile, merged, tif_file)
+                #         os.system(exe)
+                #
+                #     exe = 'gdalwarp -t_srs EPSG:4326 {} {}'.format(tif_file, tif_file_4326)
+                #     os.system(exe)
+                #     os.unlink(tif_file)
+                # shutil.rmtree(tdir)
+
+                files = sorted(glob.glob(file_pattern))
+                for file in files:
+                    c_dir = os.path.join(self.cache_dir, cat)
+                    os.makedirs(c_dir, exist_ok=True)
+                    tif_file = path_util.derived_path(file, '_'+dim, alt_dir=c_dir, alt_ext='.tif')
+                    tif_file_4326 = path_util.derived_path(file, '_'+dim+'_4326', alt_dir=c_dir, alt_ext='.tif')
+
+                    if os.path.exists(tif_file_4326):
+                        logger.info('Skipping raster projection {}, file exists.'.format(tif_file_4326))
                     else:
-                        exe = 'pdal pipeline -i {} --readers.las.filename={} --writers.gdal.filename={}'\
-                            .format(jfile, file, tif_file)
+                        if os.path.exists(tif_file):
+                            logger.info('Skipping raster {}, file exists.'.format(tif_file))
+                        else:
+                            exe = 'pdal pipeline -i {} --readers.las.filename={} --writers.gdal.filename={}'\
+                                .format(jfile, file, tif_file)
+                            os.system(exe)
+
+                        exe = 'gdalwarp -t_srs EPSG:4326 {} {}'.format(tif_file, tif_file_4326)
                         os.system(exe)
+                        os.unlink(tif_file)
 
-                    exe = 'gdalwarp -t_srs EPSG:4326 {} {}'.format(tif_file, tif_file_4326)
-                    os.system(exe)
-                    os.unlink(tif_file)
+                vrt = os.path.join(tdir, name + '.vrt')
+                cmd = 'gdalbuildvrt {} {}'.format(vrt, os.path.join(self.cache_dir, cat, '*_4326.tif'))
+                os.system(cmd)
 
-            vrt = os.path.join(tdir, name + '.vrt')
-            cmd = 'gdalbuildvrt {} {}'.format(vrt, os.path.join(self.cache_dir, cat, '*_4326.tif'))
-            os.system(cmd)
+                cmd = 'gdal_translate {} {}'.format(vrt, out)
+                os.system(cmd)
+                shutil.rmtree(tdir)
 
-            cmd = 'gdal_translate {} {}'.format(vrt, out)
-            os.system(cmd)
-            shutil.rmtree(tdir)
-
-        self.add_raster(out, cat, False, 'lanczos')
+            self.add_raster(out, cat, False, 'lanczos')
 
     def add_raster(self, file, cat, calibrate=True, interp=None):
         """
@@ -267,7 +302,7 @@ if __name__ == "__main__":
 
             if 'point_clouds' in cfg:
                 for p in cfg['point_clouds']:
-                    aoi.add_pointcloud(p['files'], p['dir'], p['name'])
+                    aoi.add_pointcloud(p['files'], p['dir'], p['name'], p['dimensions'], p['statistics'])
 
             if 'vectors' in cfg:
                 for v in cfg['vectors']:
