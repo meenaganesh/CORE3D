@@ -287,8 +287,10 @@ if __name__ == "__main__":
                             if reg_to is not None:
                                 reg = RegisterImage(reg_to[0])
                                 tile_out = path_util.derived_path(t, '_reg')
-                                reg_tiles.append(tile_out)
-                                reg.register_image(t, tile_out)
+                                if reg.register_image(t, tile_out):
+                                    reg_tiles.append(tile_out)
+                                else:
+                                    reg_tiles.append(t)
 
                         cut_list = []
                         for t in reg_tiles:
