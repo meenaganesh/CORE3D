@@ -111,9 +111,9 @@ class AOI:
         :param statistics:
         :return:
         """
-        # The following configuration controls how the rasters are produced. By default PDAL will choose the
-        # Z dimension, unless specified. Depending on how complete the PC data is, there may be more dimensions
-        # available to choose from. Typical dimensions are X, Y, Z (default), Intensity, Classification, Red,
+        # The following yml file configuration controls how the rasters are produced. The file allows you to specify
+        # the dimension to interpolate over (typically Z). Depending on how complete the PC data is, there may be more
+        # dimensions available to choose from. Typical dimensions are X, Y, Z (default), Intensity, Classification, Red,
         # Green, Blue. You can choose the dimension by adding the dimension tag to the json.  For example:
         #
         # "dimension" : "Intensity"
@@ -121,7 +121,7 @@ class AOI:
         # By default, a 6 band raster will be produced with the following defintions: (min, max, mean, idx, count,
         # stdev). The bands can be controlled by setting the output_type attribute to a comma separated list of
         # statistics for which to produce raster bands. The supported values are “min”, “max”, “mean”, “idw”,
-        # “count”, “stdev” and “all”. For example:
+        # “count”, “stdev” and “all”.
 
         for dim in dimensions.split(","):
 
