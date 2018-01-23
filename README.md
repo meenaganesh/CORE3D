@@ -53,7 +53,7 @@ quad tree. For example:
 ```
 
 Inside each ROW_COL folder, there will be a set of raster images that represent the tiles cut from
-the source images that intersected with the bounding box of the quad tree cell.
+the source images that intersected with the bounding box of the quad tree cell. Take note that multi-dates tiles of the same modality are also preserved in each quad tree folder.
 
 ### Naming conventions:
 The directory will contain files who's names are derived from the source image name. Along the way, various
