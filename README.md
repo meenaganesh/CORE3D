@@ -41,12 +41,8 @@ has been provided (aoi.yml), which includes additional comments on the various c
  - for 3D laz, we are presently only generating the Z values into statistical bands (min, max, mean, idx, count, stdev).
    Soon the configuration will be updated to all you to specify the desired dimension and bands.
    
-We want to point out here that the yaml configuration file allows you to specify which dimension of a point cloud you want to output. Below is an example where "Z, Intensity, Red, Green, Blue" were chosen such that a tif corresponding to each dimension will be produced:
+We want to point out here that the yaml configuration file allows you to specify which dimension of a point cloud you want to output. Below is an example where "Z, Intensity, Red, Green, Blue" were specified in the yaml such that a tif corresponding to each dimension will be produced:
 
-# Each set of point cloud files will be merged into a single raster
-# Each dataset appears in the sub-directory using the supplied name
-# You can select dimensions to produce the data for.  Each dimension produces a separate raster.
-# Each raster will have the bands specified by the specific statistics of interest (in the order specified).
 point_clouds:
   - files: "/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data/*.laz"
     dir: "PC"
