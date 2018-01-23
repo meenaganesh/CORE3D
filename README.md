@@ -44,10 +44,10 @@ has been provided (aoi.yml), which includes additional comments on the various c
 We want to point out here that the yaml configuration file allows you to specify which dimension of a point cloud you want to output. Below is an example where "Z, Intensity, Red, Green, Blue" were specified in the yaml such that a tif corresponding to each dimension will be produced:
 
 point_clouds:
-  - files: "/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data/*.laz"
-    dir: "PC"
-    name: "jacksonville"
-    dimensions: "Z,Intensity,Red,Green,Blue"
+  - files: "/raid/data/wdixon/jacksonville/pc/Vricon_Point_Cloud/data/*.laz"  
+    dir: "PC"  
+    name: "jacksonville"  
+    dimensions: "Z,Intensity,Red,Green,Blue"  
     statistics: "min,max,mean,idw,count,stdev"
 
 ## Examine the output:
