@@ -21,7 +21,7 @@ available to the container.  By default it maps in your home directory for the h
 
 ## Step 3: Generate the tiles
 Tiles are now generated using a quad tree referencing scheme. The quad tree maps all geographic regions of the 
-wold to to a corresponding row, column and zoom based, given a geo reference. For the purpose of this tile set
+world to to a corresponding row, column and zoom based, given a geo reference. For the purpose of this tile set
 the zoom has been fixed to a zoom of 17, which yields 1024x1024 tiles with a resolution of 
 2.68e-6 deg. lat and lon per pixel.  All images will be up-sampled to that resolution so that coordinates in
 pixel space will align between different perspectives and modalities. 
