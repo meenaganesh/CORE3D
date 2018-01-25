@@ -288,7 +288,7 @@ if __name__ == "__main__":
                         interp = None
                     aoi.add_rasters(r['files'], r['dir'], calibrate=calibrate, interp=interp)
 
-            reg_to_pattern = ''
+            reg_to_pattern = None
             if 'register' in cfg:
                 reg_to_pattern = cfg['register']
 
@@ -296,8 +296,8 @@ if __name__ == "__main__":
                 x1, y1 = aoi.tm.deg_to_xy(cfg['aoi']['west'], cfg['aoi']['north'])
                 x2, y2 = aoi.tm.deg_to_xy(cfg['aoi']['east'], cfg['aoi']['south'])
 
-                for x in range(x1 + 2, x2):
-                    for y in range(y1 + 1, y2):
+                for x in range(x1+1, x2):
+                    for y in range(y1+1, y2):
                         tile_files = []
                         tile_files.extend(aoi.tm.create_tiles_xy(x, y, border=100))
 
@@ -307,14 +307,16 @@ if __name__ == "__main__":
 
                         reg_tiles = []
                         for t in tile_files:
-                            reg_to = glob.glob(os.path.join(os.path.dirname(t), reg_to_pattern))
-                            if reg_to is not None:
+                            if reg_to_pattern is not None:
+                                reg_to = glob.glob(os.path.join(os.path.dirname(t), reg_to_pattern))
                                 reg = RegisterImage(reg_to[0])
                                 tile_out = path_util.derived_path(t, '_reg')
                                 if reg.register_image(t, tile_out):
                                     reg_tiles.append(tile_out)
                                 else:
                                     reg_tiles.append(t)
+                            else:
+                                reg_tiles.append(t)
 
                         cut_list = []
                         for t in reg_tiles:
