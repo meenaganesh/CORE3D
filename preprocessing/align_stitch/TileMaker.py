@@ -1,11 +1,11 @@
 import glob
 import logging
 import re
+import os
 import mercantile
 import shapely
 from shapely.geometry.polygon import Polygon
-
-from gdal_retile import *
+from osgeo import gdal
 
 logger = logging.getLogger(__name__)
 
