@@ -1,0 +1,17 @@
+[submodule "3rdparty/iio"]
+	path = 3rdparty/iio
+	url = https://github.com/mnhrdt/iio.git
+	ignore = untracked
+[submodule "3rdparty/mgm"]
+	path = 3rdparty/mgm
+	url = https://github.com/gfacciol/mgm.git
+	ignore = untracked
+[submodule "3rdparty/tvl1flow"]
+	path = 3rdparty/tvl1flow
+	url = https://github.com/mnhrdt/tvl1flow.git
+	ignore = untracked
+[submodule "3rdparty/mgm_multi"]
+	path = 3rdparty/mgm_multi
+	url = https://github.com/gfacciol/mgm.git
+	branch = multiscale
+	ignore = untracked
