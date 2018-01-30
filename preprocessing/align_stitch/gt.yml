@@ -1,7 +1,12 @@
 # This is the ground truth dataset for jacksonville
 # In order to combine the vricon data into the proper tiles for comparison with the test data, the ground truth files
 # were stitched and then tiled.  The output tiles are currently in EPSG:4326 (but this may change).
-# The commands to process the ground truth data are as follows:
+#
+# In each of the supplied vricon raster data categories - change directory to the corresponding data folder
+# (e.g. 170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/classification/data)
+# and build a large stitched image for the dataset.
+#
+# The commands to construct the single ground truth raster for classification would be:
 #
 #     gdalbuildvrt jacksonville_cls.vrt *.tif
 #     gdalwarp -t_srs EPSG:4326 jacksonville_cls.vrt jacksonville_cls.tif
