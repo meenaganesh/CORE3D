@@ -45,6 +45,8 @@ To test out the pipeline on actual CORE3D data, try the following:
 > python s2p.py test_jacksonville/config8K.json > output.log 2>&1
 ```
 
+ If this works correctly, you will see a nice output dsm at testoutput/output_jacksonville8K/dsm.tif.
+
 # Running the script to generate config files
 
 To run the s2p.py script on a CORE3D data directory (note: we assume
