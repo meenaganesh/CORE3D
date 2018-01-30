@@ -11,10 +11,11 @@ logger = logging.getLogger(__name__)
 
 
 class TileInfo:
-    def __init__(self, file, type, interp):
+    def __init__(self, file, type, interp, register):
         self.file = file
         self.type = type
         self.interp = interp    # nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode
+        self.register = register
 
 
 class TileMaker:
@@ -46,25 +47,26 @@ class TileMaker:
         t_region = Polygon(t_bb)
         return f_region.intersects(t_region)
 
-    def add_rasters(self, pattern, type, interp='lanczos'):
+    def add_rasters(self, pattern, type, interp='lanczos', register=True):
         for f in sorted(glob.glob(pattern)):
-            self.add_raster(f, type, interp)
+            self.add_raster(f, type, interp, register)
 
-    def add_raster(self, raster, type, interp='lanczos'):
-        self.rasters.append(TileInfo(raster, type, interp))
+    def add_raster(self, raster, type, interp='lanczos', register=True):
+        self.rasters.append(TileInfo(raster, type, interp, register))
 
     def create_all_tiles(self):
         for tr in self.rasters:
             self._create_tiles_file_extent(tr.file, postfix=self._postfix_file(tr.file), interp=tr.interp)
 
-    def create_tiles_xy(self, x, y, border=1):
+    def create_tiles_xy(self, x, y, reg, border=1):
         result = []
         tile = mercantile.Tile(x, y, self.zoom)
         for tr in self.rasters:
-            a = self.create_single_tile(tile, tr.file, postfix=self._postfix_file(tr.file), interp=tr.interp,
-                                        border=border)
-            if a is not None:
-                result.append(a)
+            if tr.register == reg:
+                a = self.create_single_tile(tile, tr.file, postfix=self._postfix_file(tr.file), interp=tr.interp,
+                                            border=border)
+                if a is not None:
+                    result.append(a)
 
         return result
 

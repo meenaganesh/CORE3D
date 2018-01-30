@@ -1,0 +1,36 @@
+# This is the ground truth dataset for jacksonville
+# In order to combine the vricon data into the proper tiles for comparison with the test data, the ground truth files
+# were stitched and then tiled.  The output tiles are currently in EPSG:4326 (but this may change).
+# The commands to process the ground truth data are as follows:
+#
+#     gdalbuildvrt jacksonville_cls.vrt *.tif
+#     gdalwarp -t_srs EPSG:4326 jacksonville_cls.vrt jacksonville_cls.tif
+#
+# This will produce a single image for the given AOI - which can be fed into the tiling routines, to create a parallel
+# set of folders in the same directory structure that can be used for performance evaluation
+
+output: "/data/core3d/tiles/ground_truth/jacksonville"
+
+rasters:
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/dhm/data/jacksonville_dhm.tif"
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/dsm/data/jacksonville_dsm.tif"
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/dtm/data/jacksonville_dtm.tif"
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/classification/data/jacksonville_cls.tif"
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/true_ortho/data/jacksonville_rgb.tif"
+    register: False
+    calibrate: False
+
+# Restricts the AOI to a bounding box (limits the tiles that are generated)
+aoi:
+  west: -81.7080716
+  north: 30.332585
+  east: -81.7053190
+  south: 30.330210

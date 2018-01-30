@@ -174,7 +174,7 @@ class AOI:
 
             self.add_raster(out, cat, False, 'lanczos')
 
-    def add_raster(self, file, cat, calibrate=True, interp=None):
+    def add_raster(self, file, cat, calibrate=True, interp=None, register=True):
         """
         Adds individual raster to the AOI.
         :param file:
@@ -187,9 +187,9 @@ class AOI:
         rast = file
         if calibrate:
             rast = self.calibrate_raster(file, os.path.join(self.cache_dir, cat), '_cal.tif')
-        self.tm.add_raster(rast, cat, interp)
+        self.tm.add_raster(rast, cat, interp, register=register)
 
-    def add_rasters(self, file_pattern, cat, calibrate=True, interp=None):
+    def add_rasters(self, file_pattern, cat, calibrate=True, interp=None, register=True):
         """
         Adds a set of rasters to the AOI.
         :param file_pattern:
@@ -204,7 +204,7 @@ class AOI:
             rast = file
             if calibrate:
                 rast = self.calibrate_raster(file, os.path.join(self.cache_dir, cat), '_cal.tif')
-            self.tm.add_raster(rast, interp)
+            self.tm.add_raster(rast, interp, register=register)
 
     def filter_msi(self, files):
         result = []
@@ -284,9 +284,12 @@ if __name__ == "__main__":
                     print(r)
                     calibrate = r.get('calibrate', True)
                     interp = r.get('interpolation', 'lanczos')
+                    register = r.get('register', True)
+                    dir = r.get('dir', 'DIR')
+
                     if interp == "None":
                         interp = None
-                    aoi.add_rasters(r['files'], r['dir'], calibrate=calibrate, interp=interp)
+                    aoi.add_rasters(r['files'], dir, calibrate=calibrate, interp=interp, register=register)
 
             reg_to_pattern = None
             if 'register' in cfg:
@@ -298,8 +301,11 @@ if __name__ == "__main__":
 
                 for x in range(x1+1, x2):
                     for y in range(y1+1, y2):
+                        # create the unregistered tiles - we are done processing these
+                        aoi.tm.create_tiles_xy(x, y, False, border=1)
+
                         tile_files = []
-                        tile_files.extend(aoi.tm.create_tiles_xy(x, y, border=100))
+                        tile_files.extend(aoi.tm.create_tiles_xy(x, y, True, border=100))
 
                         # Now attempt to register the images to a reference image.
                         # TODO: It currently only makes sense to register the
