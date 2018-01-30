@@ -2,7 +2,7 @@ This README has two parts: testing the script on CORE3D data, and
 running our script for generating config.json files from a CORE3D
 directory.
 
-[[Testing the pipeline on CORE3D data]]
+# Testing the pipeline on CORE3D data
 
 To test out the pipeline on actual CORE3D data, try the following:
 
@@ -35,14 +35,14 @@ To test out the pipeline on actual CORE3D data, try the following:
    Untar these tar files. The RPC data will be found in the following
    extracted XML files (mentioned in the config8K.json file):
 
-    - 500648062040_01/DVD_VOL_1/500648062040_01/500648062040_01_P001_PAN/14OCT05160138-P1BS-500648062040_01_P001.XML
-    - 500648061080_01/DVD_VOL_1/500648061080_01/500648061080_01_P001_PAN/14OCT05160149-P1BS-500648061080_01_P001.XML
+       - 500648062040_01/DVD_VOL_1/500648062040_01/500648062040_01_P001_PAN/14OCT05160138-P1BS-500648062040_01_P001.XML
+       - 500648061080_01/DVD_VOL_1/500648061080_01/500648061080_01_P001_PAN/14OCT05160149-P1BS-500648061080_01_P001.XML
 
  3. Run the script, capturing any output errors to a log file:
 
      > python s2p.py test_jacksonville/config8K.json > output.log 2>&1
 
-[[Running the script to generate config files]]
+# Running the script to generate config files
 
 To run the s2p.py script on a CORE3D data directory, you can use the
 configGenerator.py script in the root repository directory. You can do 
