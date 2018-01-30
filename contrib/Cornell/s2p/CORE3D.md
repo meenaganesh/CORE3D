@@ -74,8 +74,7 @@ to see the usage for this script. Here is a summary of how it works:
      symbolic link for your s2p folder, so you won't need this flag):
 
      ```
-     > python configGenerator.py ucsd/satellite_images/WV2/PAN -s [your
-       own s2p directory path]
+     > python configGenerator.py ucsd/satellite_images/WV2/PAN -s [your own s2p directory path]
      ```
 
   3. Say you want the script to process all subfolders under 'ucsd/',
@@ -91,8 +90,7 @@ to see the usage for this script. Here is a summary of how it works:
      argument which stands for "out_dir":
 
      ```
-     > python configGenerator.py ucsd -e -o [Your desired output
-       directory]
+     > python configGenerator.py ucsd -e -o [Your desired output directory]
      ```
 
   5. Finally, the current criterion that I used is to group images by
