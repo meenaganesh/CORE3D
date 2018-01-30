@@ -42,7 +42,7 @@ To test out the pipeline on actual CORE3D data, try the following:
  3. Run the script, capturing any output errors to a log file:
 
 ```
-    > python s2p.py test_jacksonville/config8K.json > output.log 2>&1
+> python s2p.py test_jacksonville/config8K.json > output.log 2>&1
 ```
 
 # Running the script to generate config files
@@ -51,7 +51,7 @@ To run the s2p.py script on a CORE3D data directory, you can use the
 configGenerator.py script in the root repository directory. You can do 
 
 ```
-    > python configGenerator.py --help
+> python configGenerator.py --help
 ```
 
 to see the usage for this script. Here is a summary of how it works:
