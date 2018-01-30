@@ -71,25 +71,33 @@ to see the usage for this script. Here is a summary of how it works:
      with a supported argument( it may be more convenient to make a
      symbolic link for your s2p folder, so you won't need this flag):
 
+     ```
      > python configGenerator.py ucsd/satellite_images/WV2/PAN -s [your
        own s2p directory path]
+     ```
 
   3. Say you want the script to process all subfolders under 'ucsd/',
      then use "-e" flag which stands for "--entire":
 
+     ```
      > python configGenerator.py ucsd -e
+     ```
 
   4. By default, the json files this script generates will have the
      'out_dir' option set to './testoutput/XXX'. If you want to modify the
      out_dir option in these config files, then use "-o" flag with an
      argument which stands for "out_dir":
 
+     ```
      > python configGenerator.py ucsd -e -o [Your desired output
        directory]
+     ```
 
   5. Finally, the current criterion that I used is to group images by
      same date. If you want to change this, then use "-c" flag, which
      stands for "--criterion", with an supported argument, which could
      be one of ['date','month','season']:
 
+     ```
      > python configGenerator.py ucsd -e -c month    
+     ```
