@@ -50,7 +50,9 @@ To test out the pipeline on actual CORE3D data, try the following:
 To run the s2p.py script on a CORE3D data directory, you can use the
 configGenerator.py script in the root repository directory. You can do 
 
+```
     > python configGenerator.py --help
+```
 
 to see the usage for this script. Here is a summary of how it works:
 
