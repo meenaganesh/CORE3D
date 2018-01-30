@@ -1,0 +1,39 @@
+{
+  "out_dir" : "../testoutput/output_jacksonville8K",
+  "images" : [
+    { "img" : "05OCT14WV031100014OCT05160138-P1BS-500648062040_01_P001_________AAE_0AAAAABPABL0.NTF",
+      "rpc" : "500648062040_01/DVD_VOL_1/500648062040_01/500648062040_01_P001_PAN/14OCT05160138-P1BS-500648062040_01_P001.XML" },
+    { "img" : "05OCT14WV031100014OCT05160149-P1BS-500648061080_01_P001_________AAE_0AAAAABPABL0.NTF",
+      "rpc" : "500648061080_01/DVD_VOL_1/500648061080_01/500648061080_01_P001_PAN/14OCT05160149-P1BS-500648061080_01_P001.XML" }
+    ],
+  "roi" : {
+      "x" : 16392,
+      "y" : 16392,
+      "w" : 8196,
+      "h" : 8196
+  },
+  "full_img" : false,
+  "matching_algorithm" : "mgm",
+  "horizontal_margin": 20,
+  "vertical_margin": 5,
+  "sift_match_thresh" : 0.6,
+  "disp_range_extra_margin" : 0.2,
+  "n_gcp_per_axis" : 5,
+  "epipolar_thresh" : 0.5,
+  "debug" : false,
+  "temporary_dir" : "/tmp",
+  "tile_size" : 1024,
+  "clean_tmp" : true,
+  "clean_intermediate" : true,
+  "fusion_thresh" : 3,
+  "disable_srtm" : true,
+  "disp_range_method" : "sift",
+  "disp_range_srtm_high_margin" : 50,
+  "disp_range_srtm_low_margin" : -20,
+  "skip_existing" : false,
+  "msk_erosion" : 0,
+  "dsm_resolution" : 0.5,
+  "max_processes" : 4,
+  "omp_num_threads" : 8,
+  "debug" : true
+}
