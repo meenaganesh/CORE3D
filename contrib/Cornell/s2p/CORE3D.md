@@ -9,45 +9,46 @@ To test out the pipeline on actual CORE3D data, try the following:
  1. Image data. Copy these two images to the test_jacksonville
     subdirectory:
 
-      - 05OCT14WV031100014OCT05160138-P1BS-500648062040_01_P001_________AAE_0AAAAABPABL0.NTF
-      - 05OCT14WV031100014OCT05160149-P1BS-500648061080_01_P001_________AAE_0AAAAABPABL0.NTF
+    - 05OCT14WV031100014OCT05160138-P1BS-500648062040_01_P001_________AAE_0AAAAABPABL0.NTF
+    - 05OCT14WV031100014OCT05160149-P1BS-500648061080_01_P001_________AAE_0AAAAABPABL0.NTF
 
     These two files are in:
-      - 170623-CORE3D-Performer-Data-Package/performer_data/performer_source_data/jacksonville/satellite_imagery/WV3/PAN/05OCT14WV031100014OCT05160138-P1BS-500648062040_01_P001_________AAE_0AAAAABPABL0.NTF
 
-      and
+    - 170623-CORE3D-Performer-Data-Package/performer_data/performer_source_data/jacksonville/satellite_imagery/WV3/PAN/05OCT14WV031100014OCT05160138-P1BS-500648062040_01_P001_________AAE_0AAAAABPABL0.NTF
 
-      - 170623-CORE3D-Performer-Data-Package/performer_data/performer_source_data/jacksonville/satellite_imagery/WV3/PAN/05OCT14WV031100014OCT05160149-P1BS-500648061080_01_P001_________AAE_0AAAAABPABL0.NTF
+    and
 
-      respectively.
+    - 170623-CORE3D-Performer-Data-Package/performer_data/performer_source_data/jacksonville/satellite_imagery/WV3/PAN/05OCT14WV031100014OCT05160149-P1BS-500648061080_01_P001_________AAE_0AAAAABPABL0.NTF
+
+    respectively.
 
  2. RPC metadata. Copy the tar files corresponding to these to image 
     to the test_jacksonville subdirectory. These tar files are named:
 
-      - 05OCT14WV031100014OCT05160138-P1BS-500648062040_01_P001_________AAE_0AAAAABPABL0.tar
-      - 05OCT14WV031100014OCT05160149-P1BS-500648061080_01_P001_________AAE_0AAAAABPABL0.tar
+    - 05OCT14WV031100014OCT05160138-P1BS-500648062040_01_P001_________AAE_0AAAAABPABL0.tar
+    - 05OCT14WV031100014OCT05160149-P1BS-500648061080_01_P001_________AAE_0AAAAABPABL0.tar
 
     and are located at:
 
-      - 170623-CORE3D-Performer-Data-Package/performer_data/performer_source_data/jacksonville/satellite_imagery/WV3/PAN/05OCT14WV031100014OCT05160138-P1BS-500648062040_01_P001_________AAE_0AAAAABPABL0.tar
-      - 170623-CORE3D-Performer-Data-Package/performer_data/performer_source_data/jacksonville/satellite_imagery/WV3/PAN/05OCT14WV031100014OCT05160149-P1BS-500648061080_01_P001_________AAE_0AAAAABPABL0.tar
+    - 170623-CORE3D-Performer-Data-Package/performer_data/performer_source_data/jacksonville/satellite_imagery/WV3/PAN/05OCT14WV031100014OCT05160138-P1BS-500648062040_01_P001_________AAE_0AAAAABPABL0.tar
+    - 170623-CORE3D-Performer-Data-Package/performer_data/performer_source_data/jacksonville/satellite_imagery/WV3/PAN/05OCT14WV031100014OCT05160149-P1BS-500648061080_01_P001_________AAE_0AAAAABPABL0.tar
 
-   Untar these tar files. The RPC data will be found in the following
-   extracted XML files (mentioned in the config8K.json file):
+    Untar these tar files. The RPC data will be found in the following
+    extracted XML files (mentioned in the config8K.json file):
 
-       - 500648062040_01/DVD_VOL_1/500648062040_01/500648062040_01_P001_PAN/14OCT05160138-P1BS-500648062040_01_P001.XML
-       - 500648061080_01/DVD_VOL_1/500648061080_01/500648061080_01_P001_PAN/14OCT05160149-P1BS-500648061080_01_P001.XML
+    - 500648062040_01/DVD_VOL_1/500648062040_01/500648062040_01_P001_PAN/14OCT05160138-P1BS-500648062040_01_P001.XML
+    - 500648061080_01/DVD_VOL_1/500648061080_01/500648061080_01_P001_PAN/14OCT05160149-P1BS-500648061080_01_P001.XML
 
  3. Run the script, capturing any output errors to a log file:
 
-     > python s2p.py test_jacksonville/config8K.json > output.log 2>&1
+    > python s2p.py test_jacksonville/config8K.json > output.log 2>&1
 
 # Running the script to generate config files
 
 To run the s2p.py script on a CORE3D data directory, you can use the
 configGenerator.py script in the root repository directory. You can do 
 
-     > python configGenerator.py --help
+    > python configGenerator.py --help
 
 to see the usage for this script. Here is a summary of how it works:
 
@@ -55,7 +56,7 @@ to see the usage for this script. Here is a summary of how it works:
      for this script to process a single folder
      "ucsd/satellite_images/WV2/PAN", just type:
 
-     >  python configGenerator.py ucsd/satellite_images/WV2/PAN
+     > python configGenerator.py ucsd/satellite_images/WV2/PAN
 
   2. However, the script also outputs a "s2p_commands.txt" that
      contains the list of Python commands to run, so it has to know
