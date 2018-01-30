@@ -60,7 +60,9 @@ to see the usage for this script. Here is a summary of how it works:
      for this script to process a single folder
      "ucsd/satellite_images/WV2/PAN", just type:
 
+     ```
      > python configGenerator.py ucsd/satellite_images/WV2/PAN
+     ```
 
   2. However, the script also outputs a "s2p_commands.txt" that
      contains the list of Python commands to run, so it has to know
