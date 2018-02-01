@@ -1,0 +1,47 @@
+# This is the ground truth dataset for ucsd
+# This will produce a single image for the given AOI - which can be fed into the tiling routines, to create a parallel
+# set of folders in the same directory structure that can be used for performance evaluation
+
+output: "/data/core3d/ground_truth/ucsd"
+
+rasters:
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/ucsd/vricon_raster_50cm/dhm/data/*.tif"
+    name: ucsd_dhm
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/ucsd/vricon_raster_50cm/dsm/data/*.tif"
+    name: ucsd_dsm
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/ucsd/vricon_raster_50cm/dtm/data/*.tif"
+    name: ucsd_dtm
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/ucsd/vricon_raster_50cm/classification/data/*.tif"
+    name: ucsd_cls
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/ucsd/vricon_raster_50cm/true_ortho/data/*.tif"
+    name: ucsd_rgb
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+
+
+vectors:
+  - files:
+      - /data/core3d/170623-CORE3D-Performer-Data-Package/performer_source_data/ucsd/open_street_map/SHP/ex_QhehDMny6tPrEqFE2prE5LJ5rcijD_osm_buildings.shp
+    dir: "SHP"
+    name: "ucsd_bldg"
+    type: "id"
+
+aoi:
+  west: -117.2884457
+  north: 32.9276135
+  east: -117.1557132
+  south: 32.8198701
+

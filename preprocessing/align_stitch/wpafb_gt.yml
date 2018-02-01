@@ -1,0 +1,47 @@
+# This is the ground truth dataset for wpafb
+# This will produce a single image for the given AOI - which can be fed into the tiling routines, to create a parallel
+# set of folders in the same directory structure that can be used for performance evaluation
+
+output: "/data/core3d/ground_truth/wpafb"
+
+rasters:
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/wpafb/vricon_raster_50cm/dhm/data/*.tif"
+    name: wpafb_dhm
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/wpafb/vricon_raster_50cm/dsm/data/*.tif"
+    name: wpafb_dsm
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/wpafb/vricon_raster_50cm/dtm/data/*.tif"
+    name: wpafb_dtm
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/wpafb/vricon_raster_50cm/classification/data/*.tif"
+    name: wpafb_cls
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/wpafb/vricon_raster_50cm/true_ortho/data/*.tif"
+    name: wpafb_rgb
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+
+
+vectors:
+  - files:
+      - /data/core3d/170623-CORE3D-Performer-Data-Package/performer_source_data/wpafb/open_street_map/SHP/ex_6YY11NXzoZKS1hMqS3og7mAVNGb32_osm_buildings.shp
+    dir: "SHP"
+    name: "wpafb_bldg"
+    type: "id"
+
+aoi:
+  west: -84.1751601
+  north: 39.8482664
+  east: -84.0251912
+  south: 39.7331237
+
