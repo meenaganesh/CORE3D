@@ -1,0 +1,47 @@
+# This is the ground truth dataset for san_fernando
+# This will produce a single image for the given AOI - which can be fed into the tiling routines, to create a parallel
+# set of folders in the same directory structure that can be used for performance evaluation
+
+output: "/data/core3d/ground_truth/san_fernando"
+
+rasters:
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/san_fernando/vricon_raster_50cm/dhm/data/*.tif"
+    name: san_fernando_dhm
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/san_fernando/vricon_raster_50cm/dsm/data/*.tif"
+    name: san_fernando_dsm
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/san_fernando/vricon_raster_50cm/dtm/data/*.tif"
+    name: san_fernando_dtm
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/san_fernando/vricon_raster_50cm/classification/data/*.tif"
+    name: san_fernando_cls
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/san_fernando/vricon_raster_50cm/true_ortho/data/*.tif"
+    name: san_fernando_rgb
+    srs: EPSG:4326
+    register: False
+    calibrate: False
+
+
+vectors:
+  - files:
+      - /data/core3d/170623-CORE3D-Performer-Data-Package/performer_source_data/san_fernando/open_street_map/SHP/ex_Sq3BkbeFXoHygdDhCpt35S6wMvhxL_osm_buildings.shp
+    dir: "SHP"
+    name: "san_fernando_bldg"
+    type: "id"
+
+aoi:
+  west: -58.6735068
+  north: -34.4110624
+  east: -58.5380359
+  south: -34.5244990
+

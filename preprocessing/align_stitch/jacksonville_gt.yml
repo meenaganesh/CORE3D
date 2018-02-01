@@ -1,66 +1,35 @@
 # This is the ground truth dataset for jacksonville
-# In order to combine the vricon data into the proper tiles for comparison with the test data, the ground truth files
-# were stitched and then tiled.  The output tiles are currently in EPSG:4326 (but this may change).
-#
-# In each of the supplied vricon raster data categories - change directory to the corresponding data folder
-# (e.g. 170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/classification/data)
-# and build a large stitched image for the dataset.
-#
-# The commands to construct the single ground truth raster for classification would be:
-#
-#     gdalbuildvrt jacksonville_cls.vrt *.tif
-#     gdalwarp -t_srs EPSG:4326 jacksonville_cls.vrt jacksonville_cls.tif
-#
 # This will produce a single image for the given AOI - which can be fed into the tiling routines, to create a parallel
 # set of folders in the same directory structure that can be used for performance evaluation
 
 output: "/data/core3d/ground_truth/jacksonville"
 
 rasters:
-  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/dhm/data/jacksonville_dhm.tif"
-    register: False
-    calibrate: False
-  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/dsm/data/jacksonville_dsm.tif"
-    register: False
-    calibrate: False
-  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/dtm/data/jacksonville_dtm.tif"
-    register: False
-    calibrate: False
-  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/classification/data/jacksonville_cls.tif"
-    register: False
-    calibrate: False
-  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/true_ortho/data/jacksonville_rgb.tif"
-    register: False
-    calibrate: False
-
-
-rasters:
   - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/dhm/data/*.tif"
-    name: jacksonville_dhm.tif
+    name: jacksonville_dhm
     srs: EPSG:4326
     register: False
     calibrate: False
   - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/dsm/data/*.tif"
-    name: jacksonville_dsm.tif
+    name: jacksonville_dsm
     srs: EPSG:4326
     register: False
     calibrate: False
   - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/dtm/data/*.tif"
-    name: jacksonville_dtm.tif
+    name: jacksonville_dtm
     srs: EPSG:4326
     register: False
     calibrate: False
   - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/classification/data/*.tif"
-    name: jacksonville_cls.tif
+    name: jacksonville_cls
     srs: EPSG:4326
     register: False
     calibrate: False
   - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/true_ortho/data/*.tif"
-    name: jacksonville_rgb.tif
+    name: jacksonville_rgb
     srs: EPSG:4326
     register: False
     calibrate: False
-
 
 vectors:
   - files:

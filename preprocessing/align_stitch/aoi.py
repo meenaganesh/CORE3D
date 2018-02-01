@@ -63,20 +63,37 @@ class AOI:
             for file in files:
                 self.output_extents('tile',file)
 
-    def add_vector(self, file, cat, name, value):
+    def add_vector(self, files, cat, name, value=None):
+        """
+        Add a vector set to raster.
+        :param files: Array of files to combine into a single raster
+        :param cat: Category name
+        :param name: Name of resulting raster without a path
+        :param value: if specified it will be the value burned into the raster, otherwise the id will be used.
+        """
         out_folder = os.path.join(self.cache_dir, cat)
         os.makedirs(out_folder, exist_ok=True)
 
-        tif = os.path.join(out_folder, name + '.tif')
-        if os.path.exists(tif):
-            logging.info("File {} already exists, skipping rasterization".format(tif))
-        else:
-            # ERROR 1: JPEGPreEncode:Strip/tile too large for JPEG
-            os.system('gdal_rasterize -burn {} -ot Byte -tr {} {} -a_nodata 0 -co "COMPRESS=LZW" {} {}'.format(value,
-                3e-6, 3e-6 , file, tif))
+        c_dir = os.path.join(self.cache_dir, cat)
+        vrt = os.path.join(c_dir, name + '.vrt')
+        idx = 0
+        t_files = []
+        for f in files:
+            t_tif = os.path.join(out_folder, name + '_' + str(idx) + '.tif')
+            t_files.append(t_tif)
+            idx = idx + 1
+            if not os.path.exists(t_tif):
+                if value is None:
+                    os.system('gdal_rasterize -of GTiff -at -a id -ot UInt32 -tr {} {} -co "COMPRESS=LZW" {} {}'.format(
+                               3e-6, 3e-6, f, t_tif))
+                else:
+                    os.system('gdal_rasterize -burn {} -of GTiff -at -a id -ot Byte -tr {} {} -a_nodata 0 -co "COMPRESS=LZW" {} {}'.format(value,
+                               3e-6, 3e-6, f, t_tif))
 
-        self.add_raster(tif, cat, False, 'lanczos')
-        self.output_tile_extents(tif, "*.tif")
+        t_files_str = " ".join([str(i) for i in t_files])
+        os.system('gdalbuildvrt -srcnodata 0 -vrtnodata 0 {} {}'.format(vrt, t_files_str))
+        self.add_raster(vrt, cat, calibrate=False, interp=None, register=False)
+        # self.output_tile_extents(tif, "*.tif")
 
     def calibrate_raster(self, file, out_folder, ext):
         os.makedirs(out_folder, exist_ok=True)
@@ -121,7 +138,7 @@ class AOI:
         # By default, a 6 band raster will be produced with the following defintions: (min, max, mean, idx, count,
         # stdev). The bands can be controlled by setting the output_type attribute to a comma separated list of
         # statistics for which to produce raster bands. The supported values are “min”, “max”, “mean”, “idw”,
-        # “count”, “stdev” and “all”.
+        # “count”, “stdev” and “all”.individual_str
 
         for dim in dimensions.split(","):
 
@@ -189,21 +206,44 @@ class AOI:
             rast = self.calibrate_raster(file, os.path.join(self.cache_dir, cat), '_cal.tif')
         self.tm.add_raster(rast, cat, interp, register=register)
 
-    def add_rasters(self, file_pattern, cat, calibrate=True, interp=None, register=True):
+    def add_rasters(self, files, cat, calibrate=True, interp=None, register=True, name=None, srs=None):
         """
         Adds a set of rasters to the AOI.
-        :param file_pattern:
+        :param files: list of files to process
         :param cat:
         :param calibrate: True if to perform radiometric calibration; otherwise false.
         :param interp:
         :return:
         """
-        files = sorted(glob.glob(file_pattern))
+        individual = []
         for file in files:
             self.output_extents(cat, file)
             rast = file
             if calibrate:
                 rast = self.calibrate_raster(file, os.path.join(self.cache_dir, cat), '_cal.tif')
+            individual.append(rast)
+            if name is None:
+                self.tm.add_raster(rast, interp, register=register)
+        if name is not None:
+            c_dir = os.path.join(self.cache_dir, cat)
+            os.makedirs(c_dir, exist_ok=True)
+
+            individual_str = " ".join([str(i) for i in individual])
+
+            rast = vrt = os.path.join(c_dir, name + '.vrt')
+            if os.path.exists(vrt):
+                logger.info('Skipping vrt {}, file exists.'.format(vrt))
+            else:
+                cmd = 'gdalbuildvrt {} {}'.format(vrt, os.path.join(self.cache_dir, cat, vrt, individual_str))
+                os.system(cmd)
+
+            if srs is not None:
+                rast = tif = os.path.join(c_dir, name + '.tif')
+                if os.path.exists(tif):
+                    logger.info('Skipping warp {}, file exists.'.format(tif))
+                else:
+                    cmd = 'gdalwarp -t_srs {} {} {}'.format(srs, vrt, tif)
+                    os.system(cmd)
             self.tm.add_raster(rast, interp, register=register)
 
     def filter_msi(self, files):
@@ -242,6 +282,15 @@ class AOI:
                     os.system(cmd)
                     break
 
+    def build_files_list(self, entry):
+        result = []
+        if isinstance(entry, list):
+            for f in entry:
+                result.extend(glob.glob(f))
+        else:
+            result.extend(glob.glob(entry))
+        return result
+
 
 if __name__ == "__main__":
     # Below is an example of how to use this AOI pipeline
@@ -277,19 +326,27 @@ if __name__ == "__main__":
 
             if 'vectors' in cfg:
                 for v in cfg['vectors']:
-                    aoi.add_vector(v['files'], v['dir'], v['name'], v['burn'])
+                    files = aoi.build_files_list(v['files'])
+                    if v.get('type', 'value') == 'id':
+                        aoi.add_vector(files, v['dir'], v['name'])
+                    else:
+                        aoi.add_vector(files, v['dir'], v['name'], v['burn'])
 
             if 'rasters' in cfg:
                 for r in cfg['rasters']:
                     print(r)
                     calibrate = r.get('calibrate', True)
                     interp = r.get('interpolation', 'lanczos')
-                    register = r.get('register', True)
-                    dir = r.get('dir', 'DIR')
-
                     if interp == "None":
                         interp = None
-                    aoi.add_rasters(r['files'], dir, calibrate=calibrate, interp=interp, register=register)
+
+                    register = r.get('register', True)
+                    dir = r.get('dir', 'DIR')
+                    files = aoi.build_files_list(r['files'])
+                    name = r.get('name', None)
+                    srs = r.get('srs', None)
+                    aoi.add_rasters(files, dir, calibrate=calibrate, interp=interp, register=register, name=name,
+                                    srs=srs)
 
             reg_to_pattern = None
             if 'register' in cfg:
@@ -315,12 +372,16 @@ if __name__ == "__main__":
                         for t in tile_files:
                             if reg_to_pattern is not None:
                                 reg_to = glob.glob(os.path.join(os.path.dirname(t), reg_to_pattern))
-                                reg = RegisterImage(reg_to[0])
-                                tile_out = path_util.derived_path(t, '_reg')
-                                if reg.register_image(t, tile_out):
-                                    reg_tiles.append(tile_out)
-                                else:
+                                if len(reg_to) <= 0:
+                                    logger.warning("Registration image not found for {}".format(t))
                                     reg_tiles.append(t)
+                                else:
+                                    reg = RegisterImage(reg_to[0])
+                                    tile_out = path_util.derived_path(t, '_reg')
+                                    if reg.register_image(t, tile_out):
+                                        reg_tiles.append(tile_out)
+                                    else:
+                                        reg_tiles.append(t)
                             else:
                                 reg_tiles.append(t)
 
