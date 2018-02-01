@@ -1,0 +1,58 @@
+
+# Controls where the output is written
+output: /data/core3d/tiles/jacksonville2/
+
+# Setting this will write the extent information for each of the added rasters, vectors and pointcloud data.
+# The RasterModalityFilter will allow you select images meeting certain extent criteria.
+# This file is appended to - so remove if you which to only contain data from this run.
+extents: /data/core3d/tiles/jacksonville/ext.txt
+
+# Each set of point cloud files will be merged into a single raster
+# Each dataset appears in the sub-directory using the supplied name
+# You can select dimensions to produce the data for.  Each dimension produces a separate raster.
+# Each raster will have the bands specified by the specific statistics of interest (in the order specified).
+#    dimensions: "Z,Intensity,Red,Green,Blue"
+#    statistics: "min,max,mean,idw,count,stdev"
+point_clouds:
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/Vricon_Point_Cloud/data/*.laz"
+    dir: "PC"
+    name: "jacksonville"
+    dimensions: "Z,Intensity"
+    statistics: "min,max,mean,idw,count,stdev"
+
+# Adds rasters using the supplied file name patten (including wild-cards)
+# calibrate: (boolean) indicating radiometric calibration is to be performed (default: True)
+# dir: (str) sub-directory under output to place the files
+# interpolation: (str) interpolation method used when rasterizing (default: "lanczos")
+rasters:
+  - files: /data/core3d/170623-CORE3D-Performer-Data-Package/vricon_foundation_data/jacksonville/vricon_raster_50cm/true_ortho/jacksonville_ref.tif
+    dir: "WV3/PAN"
+    calibrate: False
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/performer_source_data/jacksonville/satellite_imagery/WV3/MSI/*.NTF"
+    dir: "WV3/MSI"
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/performer_source_data/jacksonville/satellite_imagery/WV3/PAN/*.NTF"
+    dir: "WV3/PAN"
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/performer_source_data/jacksonville/satellite_imagery/WV2/PAN/*.NTF"
+    dir: "WV2/PAN"
+  - files: "/data/core3d/170623-CORE3D-Performer-Data-Package/performer_source_data/jacksonville/satellite_imagery/WV2/MSI/*.NTF"
+    dir: "WV2/MSI"
+
+# The registration image used for alignment - is well aligned to the OSM data. This image has been stitched
+# and converted to grayscale for pan and msi alignment. It was manually constructed
+#
+# The jacksonville_rgb.tif is produced in the .cache/DIR of jacksonville_gt.yml configuration.
+# Alternatively it can be produced by hand from the vricon dataset:
+#     gdalbuildvrt *.tif jacksonville.vrt
+#     gdalwarp -t_srs EPSG:4326 jacksonville.vrt jacksonville_rgb.tif
+#
+# The image is manually turned into grayscale:
+# gdal_calc.py -A jacksonville_rgb.tif --A_band=1 -B jacksonville_rgb.tif --B_band=2 -C jacksonville_rgb.tif --C_band=3 --outfile=jacksonville_ref.tif --calc="A*0.2989+B*0.5870+C*0.1140"
+
+register: "jacksonville_ref.tif"
+
+# Restricts the AOI to a bounding box (limits the tiles that are generated)
+aoi:
+  west: -81.7197657
+  north: 30.3602311
+  east: -81.5902932
+  south: 30.2491849
